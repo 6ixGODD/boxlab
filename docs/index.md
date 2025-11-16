@@ -393,7 +393,3 @@ Contributions are welcome! Please see:
     [:octicons-arrow-right-24: Annotator Command](guides/cli-annotator.md)
 
 </div>
-
----
-
-**Version**: 0.1.0 | **Last Updated**: 2025-01-16 | **Maintained by**: [@6ixGODD](https://github.com/6ixGODD)
