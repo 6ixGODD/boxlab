@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit report analysis tools
 - Additional format plugins (Pascal VOC, TFRecord)
 - Documentation tutorials (especially for GUI annotator)
+## [0.1.2] - 2025-01-17
+
+### Fixed
+- Fixed image tags not being saved in GUI annotator
+- Fixed image tags not displaying in CLI dataset info
+- Fixed image panel focus issues when approving/rejecting images in GUI annotator
+
+### Added
+- Added split ratio options for dataset export in GUI annotator
 
 ## [0.1.1] - 2025-01-16
 
@@ -191,6 +200,7 @@ Security vulnerability fixes.
 
 **Note**: Dates are in ISO 8601 format (YYYY-MM-DD). All notable changes for each version are documented above.
 
-[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/6ixGODD/boxlab/compare/v0.1.2
 [0.1.1]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.1
 [0.1.0]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.0
