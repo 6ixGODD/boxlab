@@ -763,11 +763,8 @@ boxlab dataset merge \
 ## Next Steps
 
 - [Annotator Command](cli-annotator.md) - GUI annotation tool
-- [Common Recipes](recipes.md) - Ready-to-use examples
-- [Troubleshooting](troubleshooting.md) - Problem solving
 
 ## Reference
 
 - [API Reference](../reference/index.md) - Python API documentation
 - [CLI Overview](cli-overview.md) - General CLI guide
-- [Format Support](format-support.md) - Supported formats

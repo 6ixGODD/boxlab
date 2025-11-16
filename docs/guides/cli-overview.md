@@ -209,4 +209,3 @@ boxlab dataset convert input.json -if coco output -of yolo --no-copy
 
 - [API Reference](../reference/index.md) - Python API documentation
 - [Dataset CLI](cli-dataset.md) - Dataset command reference
-- [Troubleshooting](troubleshooting.md) - Common issues and solutions

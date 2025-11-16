@@ -53,8 +53,6 @@ BoxLab is a comprehensive solution for working with object detection datasets. I
 
     Interactive annotation application
 
-    [:octicons-arrow-right-24: Annotator Guide](guides/annotator-guide.md)
-
     [:octicons-arrow-right-24: CLI Command](guides/cli-annotator.md)
 
 </div>
@@ -333,7 +331,6 @@ for epoch in range(num_epochs):
 
 - Browse the [Guides](guides/index.md) for tutorials
 - Check the [API Reference](reference/index.md) for detailed documentation
-- Review [Common Issues](guides/troubleshooting.md) for solutions
 
 ### Community
 
@@ -344,8 +341,6 @@ for epoch in range(num_epochs):
 
 Contributions are welcome! Please see:
 
-- [Contributing Guidelines](contributing.md)
-- [Code of Conduct](code-of-conduct.md)
 - [Development Setup](guides/installation.md#development-setup)
 
 ## What's Next?

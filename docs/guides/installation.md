@@ -360,7 +360,6 @@ pip uninstall boxlab
 
 - [Quick Start Guide](quick-start.md) - Get started with BoxLab
 - [CLI Overview](cli-overview.md) - Learn the command-line interface
-- [Annotator Guide](annotator-guide.md) - Use the GUI application
 
 ## Getting Help
 

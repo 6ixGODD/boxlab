@@ -377,11 +377,7 @@ boxlab dataset visualize \
 
 Now that you've got the basics, explore more:
 
-- **[Working with Datasets](working-with-datasets.md)** - Deep dive into dataset management
 - **[CLI Dataset Commands](cli-dataset.md)** - Complete command reference
-- **[Annotator Guide](annotator-guide.md)** - GUI application guide
-- **[PyTorch Integration](pytorch-integration.md)** - Training workflows
-- **[Common Recipes](recipes.md)** - Ready-to-use examples
 
 ## Common Issues
 
@@ -434,8 +430,3 @@ boxlab dataset convert input.json -if coco output -of yolo --no-copy
 - **API Reference**: [Complete API docs](../reference/index.md)
 - **GitHub Issues**: [Report bugs](https://github.com/6ixGODD/boxlab/issues)
 - **Discussions**: [Ask questions](https://github.com/6ixGODD/boxlab/discussions)
-
----
-
-**Ready to dive deeper?** Check out the [Working with Datasets](working-with-datasets.md) guide or explore
-the [CLI Commands](cli-dataset.md) reference.
