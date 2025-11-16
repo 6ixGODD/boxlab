@@ -83,15 +83,15 @@ class ImageListPanel(ttk.Frame):
         scrollbar.pack(side="right", fill="y")
 
         self.listbox = tk.Listbox(
-            list_frame, yscrollcommand=scrollbar.set, font=("Consolas", 9), selectmode=tk.SINGLE
+            list_frame,
+            yscrollcommand=scrollbar.set,
+            font=("Consolas", 9),
+            selectmode=tk.SINGLE,
         )
         self.listbox.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=self.listbox.yview)
 
         self.listbox.bind("<<ListboxSelect>>", self._on_listbox_select)
-
-        # Add flag to prevent recursive selection
-        self._selecting_programmatically = False
 
         # Track if filter is currently shown
         self._filter_shown = False
@@ -193,39 +193,29 @@ class ImageListPanel(ttk.Frame):
     def select_image(self, image_id: str) -> None:
         """Select image in list."""
         # Set flag to prevent triggering callback
-        self._selecting_programmatically = True
+        for _i, (img_id, filename) in enumerate(self.all_images):
+            if img_id == image_id:
+                # Find in current filtered list
+                status = self.audit_status_map.get(image_id, "pending")
 
-        try:
-            for _i, (img_id, filename) in enumerate(self.all_images):
-                if img_id == image_id:
-                    # Find in current filtered list
-                    status = self.audit_status_map.get(image_id, "pending")
+                if self._filter_shown:
+                    status_icon = {"approved": "✓", "rejected": "✗", "pending": "⏳"}.get(
+                        status, ""
+                    )
+                    display_name = f"{status_icon} {filename}"
+                else:
+                    display_name = filename
 
-                    if self._filter_shown:
-                        status_icon = {"approved": "✓", "rejected": "✗", "pending": "⏳"}.get(
-                            status, ""
-                        )
-                        display_name = f"{status_icon} {filename}"
-                    else:
-                        display_name = filename
-
-                    for j in range(self.listbox.size()):
-                        if self.listbox.get(j) == display_name:
-                            self.listbox.selection_clear(0, tk.END)
-                            self.listbox.selection_set(j)
-                            self.listbox.see(j)
-                            break
-                    break
-        finally:
-            # Always reset flag
-            self._selecting_programmatically = False
+                for j in range(self.listbox.size()):
+                    if self.listbox.get(j) == display_name:
+                        self.listbox.selection_clear(0, tk.END)
+                        self.listbox.selection_set(j)
+                        self.listbox.see(j)
+                        break
+                break
 
     def _on_listbox_select(self, _event: tk.Event) -> None:
         """Handle listbox selection."""
-        # Skip if we're selecting programmatically
-        if self._selecting_programmatically:
-            return
-
         selection = self.listbox.curselection()  # type: ignore
         if selection:
             index = selection[0]
@@ -340,14 +330,14 @@ class ControlPanel(ttk.Frame):
 
         ttk.Button(
             buttons_row,
-            text="✓ Approve (Ctrl+A)",
+            text="✓ Approve (F1)",
             command=on_approve,
             width=18,
         ).pack(side="left", padx=5)
 
         ttk.Button(
             buttons_row,
-            text="✗ Reject (Ctrl+R)",
+            text="✗ Reject (F2)",
             command=on_reject,
             width=18,
         ).pack(side="left", padx=5)

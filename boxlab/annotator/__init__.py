@@ -784,17 +784,6 @@ class AnnotatorApp:
         self.controller.set_audit_status(current_id, "approved")
         self.status_var.set("✓ Image approved")
 
-        next_id = self.controller.next_image()
-
-        if next_id:
-            self.load_image(next_id)
-            self.image_list_panel.select_image(next_id)
-            self.image_list_panel.focus_set()
-            self.update_counter()
-
-            status = self.controller.get_audit_status(next_id)
-            self.control_panel.update_audit_status(status)
-
         complete_audit_map = {}
         current_split_images = self.controller.get_images_in_split(
             self.controller.current_split or ""
@@ -806,6 +795,16 @@ class AnnotatorApp:
 
         audit_stats = self.controller.get_audit_statistics()
         self.info_panel.update_dataset_info(self.controller.get_dataset_info(), audit_stats)
+
+        next_id = self.controller.next_image()
+
+        if next_id:
+            self.load_image(next_id)
+            self.image_list_panel.select_image(next_id)
+            self.update_counter()
+
+            status = self.controller.get_audit_status(next_id)
+            self.control_panel.update_audit_status(status)
 
     def reject_current(self) -> None:
         """Reject current image and move to next."""
@@ -819,17 +818,6 @@ class AnnotatorApp:
         self.controller.set_audit_status(current_id, "rejected")
         self.status_var.set("✗ Image rejected")
 
-        next_id = self.controller.next_image()
-
-        if next_id:
-            self.load_image(next_id)
-            self.image_list_panel.select_image(next_id)
-            self.image_list_panel.focus_set()
-            self.update_counter()
-
-            status = self.controller.get_audit_status(next_id)
-            self.control_panel.update_audit_status(status)
-
         complete_audit_map = {}
         current_split_images = self.controller.get_images_in_split(
             self.controller.current_split or ""
@@ -841,6 +829,16 @@ class AnnotatorApp:
 
         audit_stats = self.controller.get_audit_statistics()
         self.info_panel.update_dataset_info(self.controller.get_dataset_info(), audit_stats)
+
+        next_id = self.controller.next_image()
+
+        if next_id:
+            self.load_image(next_id)
+            self.image_list_panel.select_image(next_id)
+            self.update_counter()
+
+            status = self.controller.get_audit_status(next_id)
+            self.control_panel.update_audit_status(status)
 
     def on_audit_comment_changed(self, comment: str) -> None:
         """Handle audit comment change.
