@@ -2,14 +2,14 @@ name: Deploy Documentation
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
