@@ -527,7 +527,16 @@ class AnnotationController:
         output_dir: str,
         format_type: str,
         naming_strategy: str,
+        split_ratio: t.Any | None = None,
     ) -> None:
+        """Export dataset to specified format.
+
+        Args:
+            output_dir: Output directory path.
+            format_type: Export format ("coco" or "yolo").
+            naming_strategy: File naming strategy ("preserve" or "sequential").
+            split_ratio: Optional SplitRatio for train/val/test split.
+        """
         import pathlib
 
         logger.info(f"Exporting to {output_dir} as {format_type}")
@@ -551,6 +560,13 @@ class AnnotationController:
             dataset = next(iter(self.datasets.values()))
             split_name = next(iter(self.datasets.keys()))
             merged = self._remove_split_prefix(dataset, split_name)
+
+        # Apply split if requested
+        if split_ratio is not None:
+            logger.info(
+                f"Splitting dataset with ratios: train={split_ratio.train}, val={split_ratio.val}, test={split_ratio.test}"
+            )
+            merged = merged.split(split_ratio, seed=42)
 
         strategy = self._get_naming_strategy(naming_strategy)
         output_path = pathlib.Path(output_dir)

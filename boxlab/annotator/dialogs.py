@@ -215,9 +215,9 @@ class ImportDialog:
 
 
 class ExportDialog:
-    """Dialog for exporting datasets."""
+    """Dialog for exporting dataset."""
 
-    def __init__(self, parent: tk.Widget):
+    def __init__(self, parent: tk.Tk):
         """Initialize export dialog."""
         self.parent = parent
         self.result: dict[str, t.Any] | None = None
@@ -226,114 +226,175 @@ class ExportDialog:
         """Show dialog and return result."""
         dialog = tk.Toplevel(self.parent)
         dialog.title("Export Dataset")
-        dialog.geometry("600x420")
+        dialog.geometry("550x420")
         dialog.resizable(False, False)
-        dialog.transient(self.parent)  # type: ignore
+        dialog.transient(self.parent)
         dialog.grab_set()
 
         # Center dialog
         dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() // 2) - (600 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (420 // 2)
+        x = (dialog.winfo_screenwidth() // 2) - (550 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (380 // 2)
         dialog.geometry(f"+{x}+{y}")
 
-        # Main container
-        main_frame = ttk.Frame(dialog, padding=10)
+        # Main frame
+        main_frame = ttk.Frame(dialog, padding=20)
         main_frame.pack(fill="both", expand=True)
 
         # Output directory
-        dir_frame = ttk.LabelFrame(main_frame, text="Output Directory", padding=10)
-        dir_frame.pack(fill="x", pady=(0, 10))
+        ttk.Label(main_frame, text="Output Directory:", font=("Segoe UI", 10, "bold")).pack(
+            anchor="w", pady=(0, 5)
+        )
 
-        dir_var = tk.StringVar()
-        dir_entry = ttk.Entry(dir_frame, textvariable=dir_var, width=60)
-        dir_entry.pack(side="left", padx=(0, 5), fill="x", expand=True)
+        dir_frame = ttk.Frame(main_frame)
+        dir_frame.pack(fill="x", pady=(0, 15))
 
-        def browse() -> None:
-            path = filedialog.askdirectory()
-            if path:
-                dir_var.set(path)
+        output_dir_var = tk.StringVar()
+        ttk.Entry(dir_frame, textvariable=output_dir_var, width=40).pack(
+            side="left", fill="x", expand=True, padx=(0, 5)
+        )
 
-        ttk.Button(dir_frame, text="Browse...", command=browse, width=12).pack(side="left")
+        def browse_directory() -> None:
+            directory = filedialog.askdirectory(title="Select Output Directory")
+            if directory:
+                output_dir_var.set(directory)
+
+        ttk.Button(dir_frame, text="Browse...", command=browse_directory, width=12).pack(
+            side="left"
+        )
 
         # Format selection
-        format_frame = ttk.LabelFrame(main_frame, text="Export Format", padding=10)
-        format_frame.pack(fill="x", pady=(0, 10))
+        ttk.Label(main_frame, text="Export Format:", font=("Segoe UI", 10, "bold")).pack(
+            anchor="w", pady=(0, 5)
+        )
 
         format_var = tk.StringVar(value="coco")
-        ttk.Radiobutton(format_frame, text="COCO", variable=format_var, value="coco").pack(
-            anchor="w", padx=5, pady=5
+        ttk.Radiobutton(main_frame, text="COCO JSON", variable=format_var, value="coco").pack(
+            anchor="w", pady=2
         )
-        ttk.Radiobutton(format_frame, text="YOLO", variable=format_var, value="yolo").pack(
-            anchor="w", padx=5, pady=5
+        ttk.Radiobutton(main_frame, text="YOLO (Darknet)", variable=format_var, value="yolo").pack(
+            anchor="w", pady=2
         )
 
         # Naming strategy
-        naming_frame = ttk.LabelFrame(main_frame, text="File Naming Strategy", padding=10)
-        naming_frame.pack(fill="x", pady=(0, 10))
-
-        naming_var = tk.StringVar(value="original")
-
-        naming_options = [
-            ("original", "Original (keep original filenames)"),
-            ("prefix", "Prefix (add source prefix)"),
-            ("uuid", "UUID (generate unique IDs)"),
-            ("uuid_prefix", "UUID + Prefix"),
-            ("sequential", "Sequential (numbered)"),
-            ("sequential_prefix", "Sequential + Prefix"),
-        ]
-
-        naming_combo = ttk.Combobox(
-            naming_frame,
-            textvariable=naming_var,
-            values=[opt[0] for opt in naming_options],
-            state="readonly",
-            width=25,
+        ttk.Label(main_frame, text="File Naming:", font=("Segoe UI", 10, "bold")).pack(
+            anchor="w", pady=(15, 5)
         )
-        naming_combo.pack(anchor="w", padx=5, pady=5)
 
-        # Description label
-        naming_desc = ttk.Label(
-            naming_frame,
-            text="Choose how to name exported files",
-            foreground="gray",
-            font=("Segoe UI", 8),
+        naming_var = tk.StringVar(value="preserve")
+        ttk.Radiobutton(
+            main_frame, text="Preserve original names", variable=naming_var, value="preserve"
+        ).pack(anchor="w", pady=2)
+        ttk.Radiobutton(
+            main_frame, text="Sequential numbering", variable=naming_var, value="sequential"
+        ).pack(anchor="w", pady=2)
+
+        # Split option - 横向布局
+        ttk.Separator(main_frame, orient="horizontal").pack(fill="x", pady=15)
+
+        # Split checkbox
+        use_split_var = tk.BooleanVar(value=False)
+        split_check = ttk.Checkbutton(
+            main_frame,
+            text="Split dataset:",
+            variable=use_split_var,
+            command=lambda: self._toggle_split_inputs(split_entries, use_split_var.get()),
         )
-        naming_desc.pack(anchor="w", padx=5, pady=(0, 5))
+        split_check.pack(anchor="w", pady=(0, 5))
 
-        # Spacer to push buttons to bottom
-        ttk.Frame(main_frame).pack(fill="both", expand=True)
+        # Split ratio inputs - 横向排列
+        split_frame = ttk.Frame(main_frame)
+        split_frame.pack(fill="x", pady=(0, 5), padx=(20, 0))
 
-        # Buttons at bottom
+        # Train
+        ttk.Label(split_frame, text="Train:").pack(side="left", padx=(0, 5))
+        train_var = tk.StringVar(value="0.8")
+        train_entry = ttk.Entry(split_frame, textvariable=train_var, width=8)
+        train_entry.pack(side="left", padx=(0, 15))
+
+        # Val
+        ttk.Label(split_frame, text="Val:").pack(side="left", padx=(0, 5))
+        val_var = tk.StringVar(value="0.1")
+        val_entry = ttk.Entry(split_frame, textvariable=val_var, width=8)
+        val_entry.pack(side="left", padx=(0, 15))
+
+        # Test
+        ttk.Label(split_frame, text="Test:").pack(side="left", padx=(0, 5))
+        test_var = tk.StringVar(value="0.1")
+        test_entry = ttk.Entry(split_frame, textvariable=test_var, width=8)
+        test_entry.pack(side="left")
+
+        # Hint
+        ttk.Label(split_frame, text="(must sum to 1.0)", font=("Segoe UI", 8)).pack(
+            side="left", padx=(10, 0)
+        )
+
+        # Store entries for enable/disable
+        split_entries = [train_entry, val_entry, test_entry]
+
+        # Initially disable split inputs
+        for entry in split_entries:
+            entry.config(state="disabled")
+
+        # Buttons
         button_frame = ttk.Frame(main_frame)
-        button_frame.pack(fill="x", pady=(10, 0))
+        button_frame.pack(side="bottom", pady=(20, 0))
 
-        def on_ok() -> None:
-            if not dir_var.get():
-                messagebox.showwarning("Warning", "Please select an output directory")
+        def on_export() -> None:
+            output_dir = output_dir_var.get()
+            if not output_dir:
+                messagebox.showwarning("Warning", "Please select output directory")
                 return
 
+            # Validate split ratios if enabled
+            split_ratio = None
+            if use_split_var.get():
+                try:
+                    train = float(train_var.get())
+                    val = float(val_var.get())
+                    test = float(test_var.get())
+
+                    from boxlab.dataset.types import SplitRatio
+
+                    split_ratio = SplitRatio(train=train, val=val, test=test)
+                    split_ratio.validate()
+                except ValueError:
+                    messagebox.showerror(
+                        "Error",
+                        "Invalid split ratio values. Please enter numbers between 0.0 and 1.0",
+                    )
+                    return
+                except Exception as e:
+                    messagebox.showerror("Error", f"Invalid split ratios: {e}")
+                    return
+
             self.result = {
-                "output_dir": dir_var.get(),
+                "output_dir": output_dir,
                 "format": format_var.get(),
                 "naming": naming_var.get(),
+                "split_ratio": split_ratio,
             }
             dialog.destroy()
 
         def on_cancel() -> None:
+            self.result = None
             dialog.destroy()
 
-        ttk.Button(button_frame, text="Cancel", command=on_cancel, width=12).pack(
-            side="right", padx=(5, 0)
+        ttk.Button(button_frame, text="Export", command=on_export, width=12).pack(
+            side="left", padx=5
         )
-        ttk.Button(button_frame, text="OK", command=on_ok, width=12).pack(side="right")
-
-        # Bind Enter key to OK
-        dialog.bind("<Return>", lambda _: on_ok())
-        dialog.bind("<Escape>", lambda _: on_cancel())
+        ttk.Button(button_frame, text="Cancel", command=on_cancel, width=12).pack(
+            side="left", padx=5
+        )
 
         dialog.wait_window()
         return self.result
+
+    def _toggle_split_inputs(self, entries: list[ttk.Entry], enabled: bool) -> None:
+        """Enable or disable split ratio inputs."""
+        state = "normal" if enabled else "disabled"
+        for entry in entries:
+            entry.config(state=state)
 
 
 class LoadingDialog:

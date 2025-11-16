@@ -437,12 +437,13 @@ class AnnotatorApp:
             output_dir = result["output_dir"]
             format_type = result["format"]
             naming = result["naming"]
+            split_ratio = result.get("split_ratio")
 
             self.status_var.set(f"Exporting to {format_type.upper()} format...")
             self.root.update()
 
             try:
-                self.controller.export_dataset(output_dir, format_type, naming)
+                self.controller.export_dataset(output_dir, format_type, naming, split_ratio)
 
                 self.status_var.set(f"✓ Exported to {output_dir}")
 
