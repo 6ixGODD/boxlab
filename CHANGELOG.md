@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional format plugins (Pascal VOC, TFRecord)
 - Documentation tutorials (especially for GUI annotator)
 
+## [0.1.1] - 2025-01-16
+
+### Fixed
+- Fixed broken documentation links throughout the documentation site
+- Fixed Windows Poetry installation issues in GitHub Actions workflows
+- Fixed ANSI color formatting in CLI output display
+- Fixed mkdocs strict mode build failures
+
+### Changed
+- Simplified CI workflows with direct pip installation of Poetry
+- Improved CLI help formatter with better spacing and readability
+- Updated documentation navigation structure
+- Enhanced README with more comprehensive examples
+
+### Added
+- Added changelog and license pages to documentation
+- Added About section to documentation site
+- Added better error handling for empty test suites in CI
+
+
 ## [0.1.0] - 2025-01-16
 
 ### Added
@@ -167,13 +187,10 @@ Security vulnerability fixes.
 - [Documentation](https://6ixgodd.github.io/boxlab)
 - [Issue Tracker](https://github.com/6ixGODD/boxlab/issues)
 
-## Contributing
-
-See [CONTRIBUTING.md](contributing.md) for information on how to contribute to BoxLab.
-
 ---
 
 **Note**: Dates are in ISO 8601 format (YYYY-MM-DD). All notable changes for each version are documented above.
 
-[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.1
 [0.1.0]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.0
