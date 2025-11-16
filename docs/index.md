@@ -388,8 +388,6 @@ Contributions are welcome! Please see:
 
     Use the GUI application
 
-    [:octicons-arrow-right-24: Annotator Guide](guides/annotator-guide.md)
-
     [:octicons-arrow-right-24: Annotator Command](guides/cli-annotator.md)
 
 </div>
