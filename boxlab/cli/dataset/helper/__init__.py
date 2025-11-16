@@ -7,6 +7,7 @@ import typing as t
 
 from boxlab.cli.helper import display
 from boxlab.dataset import Dataset
+from boxlab.dataset import io
 from boxlab.dataset.plugins import NamingStrategy
 from boxlab.dataset.plugins import SplitRatio
 from boxlab.dataset.plugins.coco import COCOExporter
@@ -25,7 +26,7 @@ from boxlab.exceptions import DatasetNotFoundError
 
 def load_dataset(
     input_path: str | os.PathLike[str],
-    format: t.Literal["coco", "yolo"],
+    format: t.Literal["coco", "yolo"] | str,
     yolo_splits: t.Literal["train", "val", "test"]
     | list[t.Literal["train", "val", "test"]]
     | None = None,
@@ -70,7 +71,7 @@ def load_dataset(
                 dataset = YOLOLoader().load(input_path, splits=None, name=name)
 
         else:
-            raise DatasetFormatError(format)
+            dataset = io.load_dataset(input_path, name=name, format=format)
 
         return dataset
 
@@ -83,7 +84,7 @@ def load_dataset(
 def export_dataset(
     dataset: Dataset,
     output_dir: pathlib.Path,
-    format: t.Literal["coco", "yolo"] = "coco",
+    format: t.Literal["coco", "yolo"] | str = "coco",
     split_ratio: SplitRatio | None = None,
     naming_strategy: NamingStrategy | None = None,
     seed: int | None = None,
@@ -124,7 +125,16 @@ def export_dataset(
                 unified_structure=unified_structure,
             )
         else:
-            raise DatasetExportError(f"Unknown format: {format}")
+            io.export_dataset(
+                dataset=dataset,
+                output_dir=output_dir,
+                format=format,
+                split_ratio=split_ratio,
+                seed=seed,
+                naming_strategy=naming_strategy,
+                copy_images=copy_images,
+                unified_structure=unified_structure,
+            )
 
     except DatasetExportError:
         raise
