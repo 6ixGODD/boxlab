@@ -90,6 +90,20 @@ logger = logging.getLogger(__name__)
 
 
 class Target(t.TypedDict):
+    """Target dictionary containing annotation information for an image.
+
+    This TypedDict defines the structure of target data returned by the dataset adapter,
+    following torchvision's object detection format conventions.
+
+    Attributes:
+        boxes: Bounding boxes tensor of shape (N, 4) where N is the number of objects.
+            Format depends on the adapter's return_format setting.
+        labels: Class label tensor of shape (N,) containing integer category IDs.
+        image_id: Image identifier tensor of shape (1,).
+        area: Area values tensor of shape (N,) for each bounding box.
+        iscrowd: Crowd flag tensor of shape (N,) indicating if object is a crowd.
+    """
+
     boxes: torch.Tensor  # shape (N, 4)
     """Bounding boxes in the specified format."""
 
@@ -107,24 +121,86 @@ class Target(t.TypedDict):
 
 
 ImageTargetPair: t.TypeAlias = tuple[t.Any, Target]
-"""Type alias for a tuple of (image, target)."""
+"""Type alias for a tuple of (image, target).
+
+The image can be either a PIL Image or a torch.Tensor depending on
+whether transforms have been applied.
+"""
 
 
 class TorchDatasetAdapter(TorchDataset[ImageTargetPair]):  # type: ignore[misc]
-    """Adapter to convert custom datasets to torchvision-compatible format.
+    """Adapter to convert BoxLab datasets to PyTorch-compatible format.
 
-    This adapter wraps BaseDataset instances and provides a PyTorch Dataset interface
-    suitable for use with DataLoader and torchvision transforms.
+    This adapter wraps Dataset instances and provides a PyTorch Dataset interface
+    suitable for use with DataLoader and torchvision transforms. It handles image
+    loading, annotation formatting, and coordinate conversion.
+
+    The adapter follows torchvision's object detection conventions, making it compatible
+    with models like Faster R-CNN, Mask R-CNN, and other detection architectures.
+
+    Args:
+        dataset: Source BoxLab Dataset instance.
+        transform: Optional torchvision transforms pipeline for images. Applied to
+            PIL Images before returning.
+        target_transform: Optional transforms for targets/annotations. Applied to
+            the target dictionary.
+        return_format: Format for bounding boxes. Options:
+            - "xyxy": [x_min, y_min, x_max, y_max]
+            - "xywh": [x_min, y_min, width, height]
+            - "cxcywh": [center_x, center_y, width, height]
+
+    Attributes:
+        dataset: The wrapped Dataset instance.
+        transform: Image transformation pipeline.
+        target_transform: Target transformation pipeline.
+        return_format: Bounding box format string.
+        image_ids: List of image IDs for indexing.
 
     Note:
         This adapter requires torch, torchvision, and pillow to be installed.
-        Install with: pip install torch torchvision pillow
+        Install with: `pip install torch torchvision pillow`
 
-    Args:
-        dataset: Source dataset (COCODataset or YOLOv5Dataset)
-        transform: Optional torchvision transforms for images
-        target_transform: Optional transforms for targets/annotations
-        return_format: Format for bounding boxes ('xyxy', 'xywh', 'cxcywh')
+    Raises:
+        RequiredModuleNotFoundError: If torch, torchvision, or PIL are not installed.
+
+    Example:
+        ```python
+        from boxlab.dataset import Dataset
+        from boxlab.dataset.torchadapter import TorchDatasetAdapter
+        from torchvision import transforms as T
+
+        # Create dataset
+        dataset = Dataset(name="my_dataset")
+        # ... populate dataset ...
+
+        # Create adapter with transforms
+        transform = T.Compose([
+            T.Resize((640, 640)),
+            T.ToTensor(),
+        ])
+
+        torch_dataset = TorchDatasetAdapter(
+            dataset, transform=transform, return_format="xyxy"
+        )
+
+        # Use with DataLoader
+        from torch.utils.data import DataLoader
+
+        loader = DataLoader(
+            torch_dataset,
+            batch_size=4,
+            collate_fn=torch_dataset.collate,
+        )
+        ```
+
+    Example:
+        ```python
+        # Iterate over dataset
+        for image, target in torch_dataset:
+            print(f"Image shape: {image.shape}")
+            print(f"Boxes: {target['boxes'].shape}")
+            print(f"Labels: {target['labels']}")
+        ```
     """
 
     def __init__(
@@ -143,27 +219,51 @@ class TorchDatasetAdapter(TorchDataset[ImageTargetPair]):  # type: ignore[misc]
         self.image_ids = list(dataset.images.keys())
 
         logger.info(
-            f"Created TorchvisionDatasetAdapter with {len(self.image_ids)} images, "
+            f"Created TorchDatasetAdapter with {len(self.image_ids)} images, "
             f"bbox format: {return_format}"
         )
 
     def __len__(self) -> int:
-        """Return the total number of samples."""
+        """Return the total number of samples in the dataset.
+
+        Returns:
+            Number of images in the dataset.
+        """
         return len(self.image_ids)
 
     def __getitem__(self, idx: int) -> ImageTargetPair:
         """Get a sample by index.
 
+        Loads the image and its annotations, applies transforms, and returns them
+        in PyTorch-compatible format.
+
         Args:
-            idx: Sample index
+            idx: Sample index (0-based integer).
 
         Returns:
-            Tuple of (image, target) where target is a dict containing:
-                - boxes: Tensor of shape (N, 4) with bounding boxes
-                - labels: Tensor of shape (N,) with class labels
-                - image_id: Image identifier
-                - area: Tensor of shape (N,) with box areas
-                - iscrowd: Tensor of shape (N,) with crowd flags
+            Tuple of (image, target) where:
+                - image: PIL Image or torch.Tensor (if transform applied)
+                - target: Dictionary containing:
+                    - boxes: Tensor of shape (N, 4) with bounding boxes
+                    - labels: Tensor of shape (N,) with class labels (1-indexed)
+                    - image_id: Tensor with image identifier
+                    - area: Tensor of shape (N,) with box areas
+                    - iscrowd: Tensor of shape (N,) with crowd flags
+
+        Raises:
+            DatasetError: If image is not found in dataset.
+            DatasetNotFoundError: If image file does not exist on disk.
+
+        Example:
+            ```python
+            # Get first sample
+            image, target = torch_dataset[0]
+
+            # Access target components
+            boxes = target["boxes"]  # Shape: (N, 4)
+            labels = target["labels"]  # Shape: (N,)
+            image_id = target["image_id"]
+            ```
         """
         image_id = self.image_ids[idx]
         img_info = self.dataset.get_image(image_id)
@@ -196,12 +296,21 @@ class TorchDatasetAdapter(TorchDataset[ImageTargetPair]):  # type: ignore[misc]
     def _prepare_target(self, annotations: list[Annotation], image_id: str) -> Target:
         """Prepare target dictionary from annotations.
 
+        Converts BoxLab annotations to PyTorch tensor format with the specified
+        bounding box format.
+
         Args:
-            annotations: List of annotations
-            image_id: Image identifier
+            annotations: List of Annotation objects for the image.
+            image_id: Image identifier string.
 
         Returns:
-            Target dictionary
+            Target dictionary with torch tensors.
+
+        Raises:
+            ValidationError: If return_format is unknown.
+
+        Note:
+            Empty annotations return zero-sized tensors with correct shapes.
         """
         boxes = []
         labels = []
@@ -241,13 +350,36 @@ class TorchDatasetAdapter(TorchDataset[ImageTargetPair]):  # type: ignore[misc]
     def collate(self, batch: list[ImageTargetPair]) -> tuple[list[torch.Tensor], list[Target]]:  # type: ignore[valid-type]
         """Custom collate function for DataLoader.
 
-        This is useful when images have different numbers of objects.
+        This collate function is useful when images have different numbers of objects,
+        which is common in object detection. Instead of stacking tensors (which requires
+        same dimensions), it returns lists of tensors and targets.
 
         Args:
-            batch: List of (image, target) tuples
+            batch: List of (image, target) tuples from __getitem__.
 
         Returns:
-            Tuple of (images, targets) lists
+            Tuple of (images, targets) where:
+                - images: List of image tensors
+                - targets: List of target dictionaries
+
+        Example:
+            ```python
+            from torch.utils.data import DataLoader
+
+            loader = DataLoader(
+                torch_dataset,
+                batch_size=4,
+                collate_fn=torch_dataset.collate,
+                shuffle=True,
+            )
+
+            for images, targets in loader:
+                # images: list of 4 tensors
+                # targets: list of 4 target dicts
+                for img, tgt in zip(images, targets):
+                    print(f"Image: {img.shape}")
+                    print(f"Objects: {len(tgt['boxes'])}")
+            ```
         """
         images = [item[0] for item in batch]
         targets = [item[1] for item in batch]
@@ -262,25 +394,113 @@ def build_torchdataset(
     *transforms: t.Callable[..., t.Any],
     return_format: t.Literal["xyxy", "xywh", "cxcywh"] = "xyxy",
 ) -> TorchDatasetAdapter:
-    """Create a torch-compatible dataset with standard transforms.
+    """Create a PyTorch-compatible dataset with standard transforms.
+
+    This convenience function builds a TorchDatasetAdapter with commonly used
+    transforms for object detection, including resizing, augmentation, and
+    normalization.
+
+    Args:
+        dataset: Source BoxLab Dataset instance.
+        image_size: Target image size. Can be:
+            - int: Square resize (size, size)
+            - tuple: (height, width)
+            - None: No resizing
+        augment: Whether to apply data augmentation. Includes:
+            - Random horizontal flip (p=0.5)
+            - Color jitter (brightness, contrast, saturation, hue)
+            - Random affine (rotation, translation, scale)
+        normalize: Whether to normalize images using ImageNet statistics:
+            - mean=[0.485, 0.456, 0.406]
+            - std=[0.229, 0.224, 0.225]
+        *transforms: Additional user-defined transforms to append.
+        return_format: Bounding box format ("xyxy", "xywh", or "cxcywh").
+
+    Returns:
+        TorchDatasetAdapter instance with configured transforms.
 
     Note:
         This function requires torch, torchvision, and pillow to be installed.
-        Install with: pip install torch torchvision pillow
+        Install with: `pip install torch torchvision pillow`
 
-    Args:
-        dataset: Source dataset (COCODataset or YOLOv5Dataset)
-        image_size: Target image size (single int or (height, width))
-        augment: Whether to apply data augmentation
-        normalize: Whether to normalize images using ImageNet statistics
-        *transforms: Additional user-defined transforms
-        return_format: Format for bounding boxes
+    Raises:
+        RequiredModuleNotFoundError: If required packages are not installed.
 
-    Returns:
-        TorchDatasetAdapter instance
+    Example:
+        ```python
+        from boxlab.dataset import Dataset
+        from boxlab.dataset.torchadapter import build_torchdataset
+        from torch.utils.data import DataLoader
+
+        # Create dataset
+        dataset = Dataset(name="my_dataset")
+        # ... populate dataset ...
+
+        # Build training dataset with augmentation
+        train_dataset = build_torchdataset(
+            dataset,
+            image_size=640,
+            augment=True,
+            normalize=True,
+            return_format="xyxy",
+        )
+
+        # Build validation dataset without augmentation
+        val_dataset = build_torchdataset(
+            dataset,
+            image_size=640,
+            augment=False,
+            normalize=True,
+            return_format="xyxy",
+        )
+
+        # Create DataLoaders
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=16,
+            shuffle=True,
+            collate_fn=train_dataset.collate,
+        )
+
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=16,
+            shuffle=False,
+            collate_fn=val_dataset.collate,
+        )
+        ```
+
+    Example:
+        ```python
+        # Add custom transforms
+        from torchvision import transforms as T
+
+        custom_transform = T.GaussianBlur(kernel_size=3)
+
+        torch_dataset = build_torchdataset(
+            dataset,
+            image_size=640,
+            augment=True,
+            normalize=True,
+            custom_transform,  # Added after normalization
+            return_format="cxcywh"
+        )
+        ```
+
+    Example:
+        ```python
+        # Different image sizes
+        torch_dataset = build_torchdataset(
+            dataset,
+            image_size=(800, 600),  # height x width
+            augment=False,
+            normalize=False,
+        )
+        ```
     """
     logger.info(
-        f"Creating torchvision dataset: size={image_size}, augment={augment}, normalize={normalize}"
+        f"Building PyTorch dataset: size={image_size}, augment={augment}, "
+        f"normalize={normalize}, format={return_format}"
     )
 
     transform_list: list[t.Callable[..., t.Any]] = []
