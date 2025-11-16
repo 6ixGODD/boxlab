@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Data augmentation support in GUI annotator
 - Audit report analysis tools
 - Additional format plugins (Pascal VOC, TFRecord)
+- Documentation tutorials (especially for GUI annotator)
 
 ## [0.1.0] - 2025-01-16
 
