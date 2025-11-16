@@ -48,3 +48,4 @@ optional-dependencies.test = [
 ]
 
 [tool.poetry.scripts]
+boxlab = "boxlab.cli:cli"
