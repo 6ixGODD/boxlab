@@ -506,22 +506,28 @@ class InfoPanel(ttk.Frame):
 
         # Tags section
         self.tags_frame = ttk.LabelFrame(self, text="Tags", padding=5)
-        self.tags_frame.pack(fill="x", padx=5, pady=5)
+        self.tags_frame.pack(
+            fill="both", expand=True, padx=5, pady=5
+        )  # 改为 fill="both", expand=True
 
         # Available tags dropdown
         tags_select_frame = ttk.Frame(self.tags_frame)
         tags_select_frame.pack(fill="x", pady=(0, 5))
+
+        ttk.Label(tags_select_frame, text="Add Tag:", font=("Segoe UI", 9)).pack(
+            side="left", padx=(0, 5)
+        )
 
         self.available_tags_var = tk.StringVar()
         self.available_tags_combo = ttk.Combobox(
             tags_select_frame,
             textvariable=self.available_tags_var,
             state="readonly",
-            width=20,
+            width=12,
         )
         self.available_tags_combo.pack(side="left", fill="x", expand=True, padx=(0, 5))
 
-        ttk.Button(tags_select_frame, text="Add", command=self._on_add_tag, width=8).pack(
+        ttk.Button(tags_select_frame, text="Add", command=self._on_add_tag, width=6).pack(
             side="left"
         )
 
@@ -529,32 +535,49 @@ class InfoPanel(ttk.Frame):
         new_tag_frame = ttk.Frame(self.tags_frame)
         new_tag_frame.pack(fill="x", pady=(0, 5))
 
+        ttk.Label(new_tag_frame, text="New Tag:", font=("Segoe UI", 9)).pack(
+            side="left", padx=(0, 5)
+        )
+
         self.new_tag_var = tk.StringVar()
-        ttk.Entry(new_tag_frame, textvariable=self.new_tag_var, width=20).pack(
+        ttk.Entry(new_tag_frame, textvariable=self.new_tag_var, width=12).pack(
             side="left", fill="x", expand=True, padx=(0, 5)
         )
-        ttk.Button(new_tag_frame, text="New", command=self._on_create_new_tag, width=8).pack(
+
+        ttk.Button(new_tag_frame, text="New", command=self._on_create_new_tag, width=6).pack(
             side="left"
         )
 
         # Current image tags
-        ttk.Label(self.tags_frame, text="Current tags:", font=("Segoe UI", 9)).pack(
-            anchor="w", pady=(5, 2)
+        ttk.Label(self.tags_frame, text="Current Image Tags:", font=("Segoe UI", 9, "bold")).pack(
+            anchor="w", pady=(10, 5)
         )
 
-        self.tags_listbox = tk.Listbox(self.tags_frame, height=4, font=("Consolas", 9))
-        tags_list_scrollbar = ttk.Scrollbar(self.tags_frame, command=self.tags_listbox.yview)
-        self.tags_listbox.config(yscrollcommand=tags_list_scrollbar.set)
+        # Listbox container with explicit size
+        tags_list_container = ttk.Frame(self.tags_frame, height=100)  # 设置明确的高度
+        tags_list_container.pack(fill="both", expand=True, pady=(0, 5))
+        tags_list_container.pack_propagate(False)  # 防止被内容收缩
 
-        tags_list_frame = ttk.Frame(self.tags_frame)
-        tags_list_frame.pack(fill="x")
+        # Listbox with scrollbar
+        self.tags_listbox = tk.Listbox(
+            tags_list_container,
+            height=5,  # 增加高度
+            font=("Segoe UI", 9),  # 改用更常见的字体
+            bg="white",  # 明确设置背景色
+            fg="black",  # 明确设置前景色
+            selectbackground="#0078D7",  # Windows 蓝色
+            selectforeground="white",
+        )
 
-        self.tags_listbox.pack(in_=tags_list_frame, side="left", fill="both", expand=True)
-        tags_list_scrollbar.pack(in_=tags_list_frame, side="right", fill="y")
+        tags_scrollbar = ttk.Scrollbar(tags_list_container, command=self.tags_listbox.yview)
+        self.tags_listbox.config(yscrollcommand=tags_scrollbar.set)
+
+        self.tags_listbox.pack(side="left", fill="both", expand=True)
+        tags_scrollbar.pack(side="right", fill="y")
 
         # Remove tag button
         ttk.Button(self.tags_frame, text="Remove Selected", command=self._on_remove_tag).pack(
-            pady=(5, 0)
+            fill="x"
         )
 
         # Annotations
@@ -579,15 +602,23 @@ class InfoPanel(ttk.Frame):
     def set_current_tags(self, tags: list[str]) -> None:
         """Set current image tags."""
         self.tags_listbox.delete(0, tk.END)
+
         for tag in tags:
             self.tags_listbox.insert(tk.END, tag)
+
+        self.tags_listbox.update_idletasks()
 
     def _on_add_tag(self) -> None:
         """Add selected tag to current image."""
         tag = self.available_tags_var.get()
-        if tag and self.on_tags_changed:
-            # Get current tags
+
+        if not tag:
+            return
+
+        if self.on_tags_changed:
+            # Get current tags from listbox
             current_tags = [self.tags_listbox.get(i) for i in range(self.tags_listbox.size())]
+
             if tag not in current_tags:
                 current_tags.append(tag)
                 self.on_tags_changed(current_tags)
@@ -595,6 +626,7 @@ class InfoPanel(ttk.Frame):
     def _on_create_new_tag(self) -> None:
         """Create a new tag."""
         tag = self.new_tag_var.get().strip()
+
         if tag:
             if self.on_new_tag:
                 self.on_new_tag(tag)
@@ -602,7 +634,8 @@ class InfoPanel(ttk.Frame):
 
     def _on_remove_tag(self) -> None:
         """Remove selected tag from current image."""
-        selection = self.tags_listbox.curselection()  # type: ignore
+        selection = self.tags_listbox.curselection()
+
         if selection and self.on_tags_changed:
             current_tags = [self.tags_listbox.get(i) for i in range(self.tags_listbox.size())]
             # Remove selected tag

@@ -34,7 +34,7 @@ class WorkspaceData(t.TypedDict):
 class Workspace:
     """Manage annotation workspace for save/load sessions."""
 
-    __version__ = "1.0"  # Bump for audit comments
+    __version__ = "1.3"  # Bump for audit comments
 
     def __init__(self) -> None:
         """Initialize workspace."""
@@ -76,12 +76,12 @@ class Workspace:
         # Migrate old versions
         version = loaded_data.get("version", "1.0")
         if version == "1.0":
-            loaded_data["version"] = "1.2"
+            loaded_data["version"] = cls.__version__
             loaded_data["available_tags"] = []
             loaded_data["image_tags"] = {}
             loaded_data["audit_comments"] = {}
         elif version == "1.1":
-            loaded_data["version"] = "1.2"
+            loaded_data["version"] = cls.__version__
             loaded_data["audit_comments"] = {}
 
         workspace.data = loaded_data

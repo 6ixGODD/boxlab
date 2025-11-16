@@ -75,14 +75,18 @@ class AnnotationController:
             self.available_tags.append(tag)
             self.set_workspace_modified()
 
-    def set_image_tags(self, image_id: str, tags: list[str]) -> None:
-        """Set tags for an image."""
-        self.image_tags[image_id] = tags
-        self.set_workspace_modified()
-
     def get_image_tags(self, image_id: str) -> list[str]:
         """Get tags for an image."""
-        return self.image_tags.get(image_id, [])
+        tags = self.image_tags.get(image_id, [])
+        print(f"TODO: get_image_tags({image_id}) -> {tags}")  # 添加这行
+        return tags
+
+    def set_image_tags(self, image_id: str, tags: list[str]) -> None:
+        """Set tags for an image."""
+        print(f"TODO: set_image_tags({image_id}, {tags})")  # 添加这行
+        self.image_tags[image_id] = tags.copy()
+        print(f"TODO: image_tags dict now: {self.image_tags}")  # 添加这行
+        self.set_workspace_modified(True)
 
     def update_annotations(self, image_id: str, annotations: list[Annotation]) -> None:
         """Cache annotation modifications for an image."""

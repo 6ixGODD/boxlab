@@ -722,8 +722,10 @@ class AnnotatorApp:
             tags: List of tag strings.
         """
         current_id = self.controller.get_current_image_id()
+
         if current_id:
             self.controller.set_image_tags(current_id, tags)
+
             self.info_panel.set_current_tags(tags)
             self._update_window_title()
             self.status_var.set("⚠️ Unsaved changes")
@@ -787,6 +789,7 @@ class AnnotatorApp:
         if next_id:
             self.load_image(next_id)
             self.image_list_panel.select_image(next_id)
+            self.image_list_panel.focus_set()
             self.update_counter()
 
             status = self.controller.get_audit_status(next_id)
@@ -821,6 +824,7 @@ class AnnotatorApp:
         if next_id:
             self.load_image(next_id)
             self.image_list_panel.select_image(next_id)
+            self.image_list_panel.focus_set()
             self.update_counter()
 
             status = self.controller.get_audit_status(next_id)
