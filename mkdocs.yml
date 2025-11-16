@@ -170,3 +170,5 @@ nav:
               - YOLO Plugin: reference/dataset/plugins/yolo.md
       - Annotator: reference/annotator.md
       - Exceptions: reference/exceptions.md
+  - Changelog: changelog.md
+  - License: license.md
