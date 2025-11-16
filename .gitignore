@@ -89,3 +89,6 @@ pyrightconfig.json
 
 data/
 !data/.gitkeep
+
+# MKDocs documentation
+site/
