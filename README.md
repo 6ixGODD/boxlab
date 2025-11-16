@@ -240,28 +240,22 @@ boxlab dataset visualize data/yolo \
 - PyTorch (for training integration)
 - torchvision (for training integration)
 
-## System Requirements
-
-- **OS**: Linux, macOS, Windows
-- **RAM**: 2GB minimum, 4GB recommended
-- **Disk**: 500MB for installation
-
 ## Project Structure
 
 ```
 boxlab/
 ├── boxlab/
-│   ├── dataset/           # Core dataset management
-│   │   ├── plugins/       # Format plugins (COCO, YOLO)
-│   │   ├── io.py          # I/O operations
-│   │   ├── types.py       # Data structures
+│   ├── dataset/            # Core dataset management
+│   │   ├── plugins/        # Format plugins (COCO, YOLO)
+│   │   ├── io.py           # I/O operations
+│   │   ├── types.py        # Data structures
 │   │   └── torchadapter.py # PyTorch integration
-│   ├── annotator/         # GUI application
-│   ├── cli/               # Command-line interface
-│   └── exceptions.py      # Error handling
-├── docs/                  # Documentation
-├── tests/                 # Test suite
-└── pyproject.toml         # Project configuration
+│   ├── annotator/          # GUI application
+│   ├── cli/                # Command-line interface
+│   └── exceptions.py       # Error handling
+├── docs/                   # Documentation
+├── tests/                  # Test suite
+└── pyproject.toml          # Project configuration
 ```
 
 ## Contributing
@@ -275,8 +269,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 git clone https://github.com/6ixGODD/boxlab.git
 cd boxlab
 
-# Install with development dependencies
-poetry install --extras dev
+# Install with development and test dependencies
+poetry install --all-extras
 
 # Run tests
 poetry run pytest
@@ -300,18 +294,6 @@ poetry run mkdocs serve
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
-
-**BoChenSHEN (6ixGODD)**
-
-- GitHub: [@6ixGODD](https://github.com/6ixGODD)
-- Email: 6goddddddd@gmail.com
-
-## Acknowledgments
-
-- COCO Dataset format specification
-- YOLO format documentation
-- PyTorch and torchvision teams
 
 ## Support
 
@@ -322,15 +304,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
-
-## Roadmap
-
-- [ ] Support for additional formats (Pascal VOC, etc.)
-- [ ] Cloud storage integration
-- [ ] Batch annotation tools
-- [ ] Model evaluation metrics
-- [ ] Dataset versioning system
-
----
-
-**Version**: 0.1.0 | **Status**: Active Development | **Last Updated**: 2025-01-16
