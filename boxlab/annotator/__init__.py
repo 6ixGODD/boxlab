@@ -145,7 +145,7 @@ class AnnotatorApp:
         def exception_handler(
             exc_type: type[BaseException],
             exc_value: BaseException,
-            exc_traceback: types.TracebackType,
+            exc_traceback: types.TracebackType | None,
         ) -> None:
             """Handle uncaught exceptions with auto-backup."""
             if isinstance(exc_value, KeyboardInterrupt):
@@ -358,7 +358,7 @@ class AnnotatorApp:
             # Use threading to avoid blocking
             error_container: list[None | BaseException] = [None]
 
-            def do_import_thread():
+            def do_import_thread() -> None:
                 try:
                     if format_type == "raw":
                         categories = result.get("categories", [])
@@ -493,14 +493,14 @@ class AnnotatorApp:
 
             error_container: list[BaseException | None] = [None]
 
-            def do_load_thread():
+            def do_load_thread() -> None:
                 try:
                     self.controller.load_workspace(filepath)
                 except Exception as e:
                     error_container[0] = e
                     logger.error(f"Failed to load workspace: {e}", exc_info=True)
 
-            def check_thread_done(thread: threading.Thread, loading_dialog: LoadingDialog):
+            def check_thread_done(thread: threading.Thread, loading_dialog: LoadingDialog) -> None:
                 def _check_thread_done(*_args: t.Any) -> None:
                     check_thread_done(thread, loading_dialog)
 

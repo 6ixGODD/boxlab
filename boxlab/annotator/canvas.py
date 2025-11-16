@@ -15,7 +15,7 @@ class AnnotationCanvas(tk.Canvas):
         self,
         parent: tk.Widget,
         on_annotation_changed: t.Callable[[], None] | None = None,
-        **kwargs,
+        **kwargs: t.Any,
     ):
         super().__init__(parent, bg="#2b2b2b", highlightthickness=0, **kwargs)
 
@@ -531,7 +531,7 @@ class AnnotationCanvas(tk.Canvas):
             self.drag_start_y = event.y
 
     def on_mouse_release(self, event: tk.Event) -> None:  # type: ignore
-        if self.panning or not self.edit_mode:
+        if self.panning or not self.edit_mode or self.current_category is None:
             return
 
         if self.drawing:
@@ -693,7 +693,7 @@ class AnnotationCanvas(tk.Canvas):
     def on_mouse_wheel(self, event: tk.Event) -> None:  # type: ignore
         """Handle mouse wheel for scrolling (vertical or horizontal with
         Shift)."""
-        if event.state & 0x1:  # Shift key pressed
+        if t.cast(int, event.state) & 0x1:  # Shift key pressed
             # Horizontal scroll
             if event.delta > 0:
                 self.pan_offset_x += 50

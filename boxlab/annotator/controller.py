@@ -261,7 +261,7 @@ class AnnotationController:
         path_obj = pathlib.Path(path)
         image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
 
-        image_files = []
+        image_files: list[pathlib.Path] = []
         for ext in image_extensions:
             image_files.extend(path_obj.glob(f"*{ext}"))
             image_files.extend(path_obj.glob(f"*{ext.upper()}"))
@@ -652,7 +652,7 @@ class AnnotationController:
 
     def _get_naming_strategy(self, name: str) -> NamingStrategy:
         """Get naming strategy by name."""
-        strategies = {
+        strategies: dict[str, NamingStrategy] = {
             "original": OriginalNaming(),
             "prefix": PrefixNaming(),
             "uuid": UUIDNaming(with_source_prefix=False),

@@ -9,8 +9,6 @@ import typing as t
 
 class ImportDialog:
     def __init__(self, parent: tk.Widget):
-        self.splits_frame: ttk.LabelFrame | None = None
-        self.categories_frame: ttk.LabelFrame | None = None
         self.parent = parent
         self.result: dict[str, t.Any] | None = None
 
@@ -56,7 +54,7 @@ class ImportDialog:
         path_entry = ttk.Entry(path_frame, textvariable=path_var, width=70)
         path_entry.pack(side="left", padx=(0, 5), fill="x", expand=True)
 
-        def browse():
+        def browse() -> None:
             path = filedialog.askdirectory()
             if path:
                 path_var.set(path)
@@ -135,7 +133,7 @@ class ImportDialog:
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill="x", pady=(10, 0))
 
-        def on_ok():
+        def on_ok() -> None:
             if not path_var.get():
                 messagebox.showwarning("Warning", "Please select a dataset path")
                 return
@@ -187,7 +185,7 @@ class ImportDialog:
 
             dialog.destroy()
 
-        def on_cancel():
+        def on_cancel() -> None:
             dialog.destroy()
 
         ttk.Button(button_frame, text="Cancel", command=on_cancel, width=12).pack(
