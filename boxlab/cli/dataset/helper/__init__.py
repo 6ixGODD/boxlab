@@ -7,16 +7,16 @@ import typing as t
 
 from boxlab.cli.helper import display
 from boxlab.dataset import Dataset
-from boxlab.dataset.exporter import NamingStrategy
-from boxlab.dataset.exporter import OriginalNaming
-from boxlab.dataset.exporter import PrefixNaming
-from boxlab.dataset.exporter import SequentialNaming
-from boxlab.dataset.exporter import SplitRatio
-from boxlab.dataset.exporter import UUIDNaming
-from boxlab.dataset.exporter import export_coco
-from boxlab.dataset.exporter import export_yolov5
-from boxlab.dataset.loader import load_coco
-from boxlab.dataset.loader import load_yolo
+from boxlab.dataset.plugins import NamingStrategy
+from boxlab.dataset.plugins import SplitRatio
+from boxlab.dataset.plugins.coco import COCOExporter
+from boxlab.dataset.plugins.coco import COCOLoader
+from boxlab.dataset.plugins.naming import OriginalNaming
+from boxlab.dataset.plugins.naming import PrefixNaming
+from boxlab.dataset.plugins.naming import SequentialNaming
+from boxlab.dataset.plugins.naming import UUIDNaming
+from boxlab.dataset.plugins.yolo import YOLOExporter
+from boxlab.dataset.plugins.yolo import YOLOLoader
 from boxlab.exceptions import DatasetExportError
 from boxlab.exceptions import DatasetFormatError
 from boxlab.exceptions import DatasetLoadError
@@ -51,7 +51,7 @@ def load_dataset(
         if format == "coco":
             if not path.is_file():
                 raise DatasetFormatError(format, "Expected annotation JSON file")
-            dataset = load_coco(input_path, name=name)
+            dataset = COCOLoader().load(input_path, name=name)
 
         elif format == "yolo":
             if not path.is_dir():
@@ -60,14 +60,14 @@ def load_dataset(
                 raise DatasetFormatError(format, "data.yaml not found")
 
             if yolo_splits is not None:
-                dataset = load_yolo(
+                dataset = YOLOLoader().load(
                     input_path,
                     splits=yolo_splits,  # type: ignore
                     name=name,
                 )
             else:
                 # Load all splits
-                dataset = load_yolo(input_path, splits=None, name=name)
+                dataset = YOLOLoader().load(input_path, splits=None, name=name)
 
         else:
             raise DatasetFormatError(format)
@@ -104,7 +104,7 @@ def export_dataset(
     """
     try:
         if format == "coco":
-            export_coco(
+            COCOExporter().export(
                 dataset=dataset,
                 output_dir=output_dir,
                 split_ratio=split_ratio,
@@ -114,7 +114,7 @@ def export_dataset(
                 unified_structure=unified_structure,
             )
         elif format == "yolo":
-            export_yolov5(
+            YOLOExporter().export(
                 dataset=dataset,
                 output_dir=output_dir,
                 split_ratio=split_ratio,
@@ -264,8 +264,6 @@ def load_dataset_info(
     Returns:
         Dict mapping split names to Dataset objects
     """
-    from boxlab.dataset.loader import load_coco
-    from boxlab.dataset.loader import load_yolo
 
     path = pathlib.Path(input_path)
 
@@ -279,7 +277,7 @@ def load_dataset_info(
             # For COCO, look for annotations_<split>.json files
             if not path.is_dir():
                 # Single annotation file, treat as single split
-                dataset = load_coco(input_path)
+                dataset = COCOLoader().load(input_path)
                 split_name = path.stem.replace("annotations_", "") or "dataset"
                 datasets[split_name] = dataset
             else:
@@ -299,7 +297,7 @@ def load_dataset_info(
                         ann_files = list(path.glob("annotations*.json"))
                         if ann_files:
                             # Use the first one
-                            dataset = load_coco(ann_files[0])
+                            dataset = COCOLoader().load(ann_files[0])
                             datasets["dataset"] = dataset
                         else:
                             raise DatasetNotFoundError(f"No annotation files found in {input_path}")
@@ -310,7 +308,7 @@ def load_dataset_info(
                 for split in available_splits:
                     ann_file = path / f"annotations_{split}.json"
                     if ann_file.exists():
-                        dataset = load_coco(ann_file, name=f"{path.name}_{split}")
+                        dataset = COCOLoader().load(ann_file, name=f"{path.name}_{split}")
                         datasets[split] = dataset
                     else:
                         display.warning(f"Annotation file not found for {split} split: {ann_file}")
@@ -337,7 +335,9 @@ def load_dataset_info(
 
                 # Load each split separately
                 for split in available_splits:
-                    dataset = load_yolo(input_path, splits=split, name=f"{path.name}_{split}")
+                    dataset = YOLOLoader().load(
+                        input_path, splits=split, name=f"{path.name}_{split}"
+                    )
                     datasets[split] = dataset
             else:
                 # Load specific splits
@@ -346,7 +346,9 @@ def load_dataset_info(
                         display.warning(f"Split directory not found: {split}")
                         continue
 
-                    dataset = load_yolo(input_path, splits=split, name=f"{path.name}_{split}")
+                    dataset = YOLOLoader().load(
+                        input_path, splits=split, name=f"{path.name}_{split}"
+                    )
                     datasets[split] = dataset
 
         else:
