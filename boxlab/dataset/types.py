@@ -16,12 +16,6 @@ class BBox(t.NamedTuple):
     The internal representation uses XYXY format (x_min, y_min, x_max, y_max) which is
     the most common format for object detection tasks.
 
-    Args:
-        x_min: Minimum (left) X coordinate.
-        y_min: Minimum (top) Y coordinate.
-        x_max: Maximum (right) X coordinate.
-        y_max: Maximum (bottom) Y coordinate.
-
     Attributes:
         x_min: Minimum X coordinate of the bounding box.
         y_min: Minimum Y coordinate of the bounding box.
@@ -184,7 +178,7 @@ class Annotation(t.NamedTuple):
     Represents a single object annotation in an image, including its spatial location
     (bounding box) and semantic information (category). Follows COCO annotation conventions.
 
-    Args:
+    Attributes:
         bbox: Bounding box of the annotated object.
         category_id: Integer category identifier.
         category_name: Human-readable category name.
@@ -192,15 +186,6 @@ class Annotation(t.NamedTuple):
         annotation_id: Optional unique identifier for this annotation.
         area: Optional pre-computed area. If None, calculated from bbox.
         iscrowd: Crowd annotation flag (0=single object, 1=crowd of objects).
-
-    Attributes:
-        bbox: Bounding box of the annotation.
-        category_id: Category ID of the annotation.
-        category_name: Category name of the annotation.
-        image_id: ID of the image the annotation belongs to.
-        annotation_id: Unique ID of the annotation.
-        area: Area of the annotation, if available.
-        iscrowd: Crowd annotation flag (0 or 1).
 
     Example:
         ```python
@@ -297,19 +282,12 @@ class ImageInfo(t.NamedTuple):
     Stores essential information about an image in the dataset, including dimensions
     and file location.
 
-    Args:
+    Attributes:
         image_id: Unique identifier for the image.
         file_name: Filename of the image (e.g., "image001.jpg").
         width: Image width in pixels.
         height: Image height in pixels.
         path: Optional filesystem path to the image file.
-
-    Attributes:
-        image_id: Unique identifier for the image.
-        file_name: Filename of the image.
-        width: Width of the image.
-        height: Height of the image.
-        path: Optional filesystem path to the image.
 
     Example:
         ```python
@@ -459,15 +437,10 @@ class SplitRatio(t.NamedTuple):
     Defines the proportions for splitting a dataset into training, validation,
     and test sets. All ratios must sum to 1.0.
 
-    Args:
+    Attributes:
         train: Training set ratio (default: 0.8).
         val: Validation set ratio (default: 0.1).
         test: Test set ratio (default: 0.1).
-
-    Attributes:
-        train: Training set ratio.
-        val: Validation set ratio.
-        test: Test set ratio.
 
     Raises:
         ValidationError: If ratios don't sum to 1.0 (within tolerance of 1e-6).
