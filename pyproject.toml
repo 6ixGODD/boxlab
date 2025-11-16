@@ -22,18 +22,22 @@ dependencies = [
   "halo>=0.0.31,<0.0.32",
   "matplotlib>=3.10.7,<4",
   "numpy>=1.26,<2",
+  "pandas>=2.3.3,<3",
   "pillow>=12,<13",
   "pydantic>=2.12.4,<3",
   "pyyaml>=6.0.3,<7",
 ]
 
 optional-dependencies.dev = [
-  "mkdocs>=1.6.1,<2",
-  "mkdocs-material>=9.7,<10",
-  "mkdocstrings[python]>=0.30.1,<0.31",
-  "myst-parser>=4.0.1,<5",
   "pre-commit>=4.4,<5",
   "ruff>=0.14.5,<0.15",
+]
+optional-dependencies.docs = [
+  "mkdocs>=1.6.1,<2",
+  "mkdocs-material>=9.7,<10",
+  "mkdocs-minify-plugin>=0.8,<0.9",
+  "mkdocstrings[python]>=0.30.1,<0.31",
+  "pymdown-extensions>=10,<11",
 ]
 optional-dependencies.test = [
   "mypy>=1.18.2,<2",
@@ -42,3 +46,5 @@ optional-dependencies.test = [
   "pytest-cov>=7,<8",
   "types-pyyaml>=6.0.12.20250915,<7",
 ]
+
+[tool.poetry.scripts]
