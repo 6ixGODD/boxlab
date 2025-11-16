@@ -203,6 +203,7 @@ class LoaderPlugin(abc.ABC):
     def load(
         self,
         path: str | os.PathLike[str],
+        name: str | None = None,
         **kwargs: t.Any,
     ) -> Dataset:
         """Load dataset from path.
@@ -213,6 +214,7 @@ class LoaderPlugin(abc.ABC):
         Args:
             path: Path to dataset file or directory. Can be a JSON file,
                 YAML file, or directory containing dataset files.
+            name: Name to assign to the loaded Dataset instance.
             **kwargs: Additional loader-specific parameters. Common options:
                 - image_root (str): Root directory for image files
                 - source_name (str): Name to tag this data source

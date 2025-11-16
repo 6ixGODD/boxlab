@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 def load_dataset(
     path: str | os.PathLike[str],
+    name: str | None = None,
     format: str = "auto",
     **kwargs: t.Any,
 ) -> Dataset:
@@ -28,6 +29,7 @@ def load_dataset(
 
     Args:
         path: Path to dataset
+        name: Optional name for the dataset
         format: Dataset format ('coco', 'yolo', or 'auto' to detect)
         **kwargs: Additional format-specific parameters
 
@@ -58,7 +60,7 @@ def load_dataset(
         raise ValueError(f"Unsupported format: {format}. Available formats: {available}") from e
 
     # Load dataset
-    return loader.load(path, **kwargs)
+    return loader.load(path, name, **kwargs)
 
 
 def export_dataset(

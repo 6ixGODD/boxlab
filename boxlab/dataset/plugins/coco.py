@@ -40,16 +40,17 @@ class COCOLoader(LoaderPlugin):
     def load(
         self,
         path: str | os.PathLike[str],
-        images_dir: str | os.PathLike[str] | None = None,
         name: str | None = None,
+        images_dir: str | os.PathLike[str] | None = None,
         **_kwargs: t.Any,
     ) -> Dataset:
         """Load COCO dataset.
 
         Args:
             path: Path to COCO annotation JSON file
+            name: Optional dataset name. If not provided, the filename (without
+                extension) will be used.
             images_dir: Optional custom path to images directory
-            name: Optional dataset name
             **_kwargs: Additional parameters (ignored)
 
         Returns:

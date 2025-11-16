@@ -74,9 +74,9 @@ class YOLOLoader(LoaderPlugin):
     def load(
         self,
         path: str | os.PathLike[str],
+        name: str | None = None,
         splits: str | list[str] | None = None,
         yaml_file: str = "data.yaml",
-        name: str | None = None,
         **_kwargs: t.Any,
     ) -> Dataset:
         """Load YOLO format dataset.
@@ -87,13 +87,13 @@ class YOLOLoader(LoaderPlugin):
 
         Args:
             path: Path to YOLO dataset root directory.
+            name: Optional custom name for the dataset. If None, uses directory
+                name.
             splits: Which split(s) to load. Can be:
                 - None: Load all splits (train, val, test)
                 - str: Load single split (e.g., "train")
                 - list[str]: Load specific splits (e.g., ["train", "val"])
             yaml_file: Name of YAML configuration file. Defaults to "data.yaml".
-            name: Optional custom name for the dataset. If None, uses directory
-                name.
             **_kwargs: Additional parameters (currently unused, reserved for
                 future extensions).
 
