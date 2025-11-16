@@ -101,7 +101,7 @@ class ImportDialog:
         categories_text.pack(side="left", fill="both", expand=True)
         categories_scrollbar.pack(side="right", fill="y")
 
-        default_categories = "crack\nspalling\nrebar_exposure"
+        default_categories = ""
         categories_text.insert("1.0", default_categories)
 
         # Tags frame - smaller
@@ -124,7 +124,7 @@ class ImportDialog:
         tags_text.pack(side="left", fill="x", expand=True)
         tags_scrollbar.pack(side="right", fill="y")
 
-        default_tags = "needs_review\nsmall_object\nmultiple_labels"
+        default_tags = "small_object\nmultiple_objects\nblurry"
         tags_text.insert("1.0", default_tags)
 
         # Spacer to push buttons down

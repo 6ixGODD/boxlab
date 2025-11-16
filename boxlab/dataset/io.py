@@ -5,7 +5,6 @@ import os
 import typing as t
 
 from boxlab.dataset import Dataset
-from boxlab.dataset import SplitRatio
 from boxlab.dataset.plugins import NamingStrategy
 from boxlab.dataset.plugins.naming import OriginalNaming
 from boxlab.dataset.plugins.naming import PrefixNaming
@@ -15,6 +14,7 @@ from boxlab.dataset.plugins.registry import get_exporter
 from boxlab.dataset.plugins.registry import get_loader
 from boxlab.dataset.plugins.registry import list_exporters
 from boxlab.dataset.plugins.registry import list_loaders
+from boxlab.dataset.types import SplitRatio
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ def _get_naming_strategy(naming: str | NamingStrategy) -> NamingStrategy:
         ValueError: If strategy name is unknown
     """
     if isinstance(naming, str):
-        strategies = {
+        strategies: dict[str, NamingStrategy] = {
             "original": OriginalNaming(),
             "prefix": PrefixNaming(),
             "uuid": UUIDNaming(with_source_prefix=False),

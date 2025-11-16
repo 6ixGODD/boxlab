@@ -19,7 +19,7 @@ from boxlab.dataset.types import BBox
 from boxlab.dataset.types import ImageInfo
 
 if t.TYPE_CHECKING:
-    from boxlab.dataset import SplitRatio
+    from boxlab.dataset.types import SplitRatio
 
 logger = logging.getLogger(__name__)
 

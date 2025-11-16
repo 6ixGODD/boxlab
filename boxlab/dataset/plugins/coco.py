@@ -17,7 +17,40 @@ from boxlab.dataset.types import BBox
 from boxlab.dataset.types import ImageInfo
 
 if t.TYPE_CHECKING:
-    from boxlab.dataset import SplitRatio
+    from boxlab.dataset.types import SplitRatio
+
+    class CocoInfo(t.TypedDict):
+        description: str
+        version: str
+        year: int
+        contributor: str
+
+    class CocoCategory(t.TypedDict):
+        id: int
+        name: str
+        supercategory: str
+
+    class CocoImage(t.TypedDict):
+        id: int
+        file_name: str
+        width: int
+        height: int
+
+    class CocoAnnotation(t.TypedDict):
+        id: int
+        image_id: int
+        category_id: int
+        bbox: list[float]
+        area: float
+        iscrowd: int
+        segmentation: list[list[float]]
+
+    class CocoDataset(t.TypedDict):
+        info: CocoInfo
+        images: list[CocoImage]
+        annotations: list[CocoAnnotation]
+        categories: list[CocoCategory]
+
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +292,7 @@ class COCOExporter(ExporterPlugin):
             annotation_file = output_dir / f"annotations_{split_name}.json"
 
         # Build COCO structure
-        coco_output = {
+        coco_output: CocoDataset = {
             "info": {
                 "description": dataset.name,
                 "version": "1.0",

@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import typing as t
 
+import PIL.Image as Image
+
 from boxlab.dataset import Dataset
 from boxlab.dataset.types import Annotation
 from boxlab.exceptions import DatasetError
@@ -11,18 +13,16 @@ from boxlab.exceptions import RequiredModuleNotFoundError
 from boxlab.exceptions import ValidationError
 
 if t.TYPE_CHECKING:
-    import PIL.Image as Image
     import torch
     from torch.utils.data import Dataset as TorchDataset
     from torchvision import transforms as T  # noqa: N812
 else:
     try:
-        import PIL.Image as Image
         import torch
         from torch.utils.data import Dataset as TorchDataset
         from torchvision import transforms as T  # noqa: N812
     except ImportError as e:
-        missing_module = e.name or ("torch", "torchvision", "Pillow")
+        missing_module = e.name or ("torch", "torchvision")
 
         def _raise_import_error(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:  # noqa
             raise RequiredModuleNotFoundError(

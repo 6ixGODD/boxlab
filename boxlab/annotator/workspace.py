@@ -6,6 +6,8 @@ import pathlib
 import typing as t
 
 if t.TYPE_CHECKING:
+    from boxlab.annotator.types import AuditReport
+    from boxlab.annotator.types import AuditReportImageEntry
     from boxlab.dataset.types import Annotation
 
 
@@ -237,7 +239,7 @@ class Workspace:
         output_path = pathlib.Path(output_path)
 
         # Build report data
-        report = {
+        report: AuditReport = {
             "metadata": {
                 "version": self.__version__,
                 "generated_at": datetime.datetime.now().isoformat(),
@@ -284,7 +286,7 @@ class Workspace:
             # Audit comment
             comment = self.data["audit_comments"].get(img_id, "")
 
-            image_entry = {
+            image_entry: AuditReportImageEntry = {
                 "image_id": img_id,
                 "filename": filename,
                 "source": source,

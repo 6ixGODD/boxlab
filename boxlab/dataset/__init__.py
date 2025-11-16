@@ -489,6 +489,10 @@ class Dataset:
 
     # Statistics ===============================================================
 
+    @t.overload
+    def get_statistics(self, by_source: t.Literal[False] = False) -> DatasetStatistics: ...
+    @t.overload
+    def get_statistics(self, by_source: t.Literal[True]) -> dict[str, DatasetStatistics]: ...
     def get_statistics(
         self,
         by_source: bool = False,
@@ -1003,7 +1007,7 @@ class Dataset:
             return
 
         categories = list(cat_dist.keys())
-        counts = list(cat_dist.values())
+        counts = list(map(float, cat_dist.values()))
 
         _fig, ax = plt.subplots(1, figsize=figsize)
         bars = ax.bar(categories, counts, color="skyblue", edgecolor="navy", alpha=0.7)

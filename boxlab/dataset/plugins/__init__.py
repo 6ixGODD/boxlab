@@ -7,7 +7,7 @@ if t.TYPE_CHECKING:
     import os
 
     from boxlab.dataset import Dataset
-    from boxlab.dataset import SplitRatio
+    from boxlab.dataset.types import SplitRatio
 
 
 class NamingStrategy(t.Protocol):
