@@ -55,17 +55,17 @@ def load_dataset(
             dataset = COCOLoader().load(input_path, name=name)
 
         elif format == "yolo":
-            if not path.is_dir():
-                raise DatasetFormatError(format, "Expected dataset directory")
-            if not (path / "data.yaml").exists():
-                raise DatasetFormatError(format, "data.yaml not found")
+            if path.is_dir():
+                dataset_path = path / "data.yaml"
+                if not dataset_path.exists() or not dataset_path.is_file():
+                    raise DatasetFormatError(format, "Expected dataset directory or data.yaml file")
+            elif path.is_file() and path.suffix not in {".yaml", ".yml"}:
+                raise DatasetFormatError(format, "Expected dataset directory or data.yaml file")
+            else:
+                dataset_path = path
 
             if yolo_splits is not None:
-                dataset = YOLOLoader().load(
-                    input_path,
-                    splits=yolo_splits,  # type: ignore
-                    name=name,
-                )
+                dataset = YOLOLoader().load(dataset_path, splits=yolo_splits, name=name)
             else:
                 # Load all splits
                 dataset = YOLOLoader().load(input_path, splits=None, name=name)
@@ -324,11 +324,14 @@ def load_dataset_info(
                         display.warning(f"Annotation file not found for {split} split: {ann_file}")
 
         elif format == "yolo":
-            if not path.is_dir():
-                raise DatasetFormatError(format, "Expected dataset directory")
-
-            if not (path / "data.yaml").exists():
-                raise DatasetFormatError(format, "data.yaml not found")
+            if path.is_dir():
+                dataset_path = path / "data.yaml"
+                if not dataset_path.exists() or not dataset_path.is_file():
+                    raise DatasetFormatError(format, "Expected dataset directory or data.yaml file")
+            elif path.is_file() and path.suffix not in {".yaml", ".yml"}:
+                raise DatasetFormatError(format, "Expected dataset directory or data.yaml file")
+            else:
+                dataset_path = path
 
             # For YOLO, load specified splits or all available
             if splits is None:
@@ -346,7 +349,9 @@ def load_dataset_info(
                 # Load each split separately
                 for split in available_splits:
                     dataset = YOLOLoader().load(
-                        input_path, splits=split, name=f"{path.name}_{split}"
+                        dataset_path,
+                        splits=split,
+                        name=f"{path.name}_{split}",
                     )
                     datasets[split] = dataset
             else:
