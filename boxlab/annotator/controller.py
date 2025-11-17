@@ -16,8 +16,8 @@ from boxlab.dataset.types import Annotation
 from boxlab.dataset.types import ImageInfo
 
 if t.TYPE_CHECKING:
-    from boxlab.dataset import SplitRatio
     from boxlab.dataset.plugins import NamingStrategy
+    from boxlab.dataset.types import SplitRatio
 
 logger = logging.getLogger(__name__)
 

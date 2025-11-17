@@ -12,6 +12,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 if t.TYPE_CHECKING:
+    from streamlit.runtime.uploaded_file_manager import UploadedFile
+
     from boxlab.annotator.types import AuditReport
 
 
@@ -401,7 +403,7 @@ def show_details(report: AuditReport) -> None:
 
         with col_b:
             if selected_img.get("modified_annotations"):
-                modified_count = len(selected_img["modified_annotations"])
+                modified_count = len(selected_img["modified_annotations"] or [])
                 delta = f"{modified_count - original_count:+d}"
                 render_metric_card("Modified", modified_count, delta, "✏️")
             else:
@@ -481,7 +483,7 @@ def show_statistics(report: AuditReport) -> None:
 
     orig_counts = [len(img.get("original_annotations", [])) for img in images]
     mod_counts = [
-        len(img.get("modified_annotations", []))
+        len(img.get("modified_annotations", []) or [])
         if img.get("modified_annotations")
         else len(img.get("original_annotations", []))
         for img in images
@@ -514,7 +516,7 @@ def main() -> None:
     )
 
     # File uploader or command line arg
-    report_path = None
+    report_path: str | UploadedFile | None = None
 
     if len(sys.argv) > 1:
         report_path = sys.argv[1]
@@ -556,10 +558,7 @@ def main() -> None:
     # Load report
     try:
         report = load_report(report_path)
-        if isinstance(report_path, str):
-            st.sidebar.success(f"✅ Loaded: {pathlib.Path(report_path).name}")
-        else:
-            st.sidebar.success(f"✅ Loaded: {report_path.name}")
+        st.sidebar.success(f"✅ Loaded: {pathlib.Path(report_path).name}")
     except Exception as e:
         st.error(f"❌ Failed to load report: {e}")
         return

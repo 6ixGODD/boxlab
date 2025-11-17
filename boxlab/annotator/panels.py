@@ -624,7 +624,7 @@ class InfoPanel(ttk.Frame):
 
     def _on_remove_tag(self) -> None:
         """Remove selected tag from current image."""
-        selection = self.tags_listbox.curselection()
+        selection = self.tags_listbox.curselection()  # type: ignore
 
         if selection and self.on_tags_changed:
             current_tags = [self.tags_listbox.get(i) for i in range(self.tags_listbox.size())]
