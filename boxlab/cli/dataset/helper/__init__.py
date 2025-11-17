@@ -9,7 +9,6 @@ from boxlab.cli.helper import display
 from boxlab.dataset import Dataset
 from boxlab.dataset import io
 from boxlab.dataset.plugins import NamingStrategy
-from boxlab.dataset.plugins import SplitRatio
 from boxlab.dataset.plugins.coco import COCOExporter
 from boxlab.dataset.plugins.coco import COCOLoader
 from boxlab.dataset.plugins.naming import OriginalNaming
@@ -18,6 +17,7 @@ from boxlab.dataset.plugins.naming import SequentialNaming
 from boxlab.dataset.plugins.naming import UUIDNaming
 from boxlab.dataset.plugins.yolo import YOLOExporter
 from boxlab.dataset.plugins.yolo import YOLOLoader
+from boxlab.dataset.types import SplitRatio
 from boxlab.exceptions import DatasetExportError
 from boxlab.exceptions import DatasetFormatError
 from boxlab.exceptions import DatasetLoadError
