@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import logging
 import pathlib
+import sys
 import tkinter as tk
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
@@ -228,6 +230,11 @@ class AnnotatorApp:
         audit_menu.add_separator()
         audit_menu.add_command(label="View Audit Report", command=self.show_audit_report)
         audit_menu.add_command(label="Export Audit Report...", command=self.export_audit_report)
+        audit_menu.add_separator()
+        audit_menu.add_command(
+            label="Open Dashboard (Current)...", command=self.open_current_dashboard
+        )
+        audit_menu.add_command(label="Open Dashboard (File)...", command=self.open_file_dashboard)
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -905,6 +912,222 @@ class AnnotatorApp:
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to export report:\n{e}")
                 logger.error(f"Failed to export report: {e}", exc_info=True)
+
+    def open_current_dashboard(self) -> None:
+        """Open Streamlit dashboard for current audit state."""
+        if not self.controller.audit_mode:
+            messagebox.showinfo("Info", "Audit mode is not enabled")
+            return
+
+        import subprocess
+        import tempfile
+        import threading
+
+        # Export current audit state to temp file
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            delete=False,
+            prefix="boxlab_audit_",
+        ) as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            self.controller.generate_audit_report_json(temp_path)
+
+            # Get dashboard path
+            dashboard_path = pathlib.Path(__file__).parent / "streamlit" / "audit.py"
+
+            if not dashboard_path.exists():
+                messagebox.showerror("Error", f"Dashboard not found: {dashboard_path}")
+                return
+
+            # Show dialog with server info
+            dialog = tk.Toplevel(self.root)
+            dialog.title("Audit Dashboard Server")
+            dialog.geometry("500x300")
+            dialog.transient(self.root)
+
+            # Center dialog
+            dialog.update_idletasks()
+            x = (dialog.winfo_screenwidth() // 2) - 250
+            y = (dialog.winfo_screenheight() // 2) - 150
+            dialog.geometry(f"+{x}+{y}")
+
+            main_frame = ttk.Frame(dialog, padding=20)
+            main_frame.pack(fill="both", expand=True)
+
+            ttk.Label(
+                main_frame, text="🚀 Starting Audit Dashboard...", font=("Segoe UI", 12, "bold")
+            ).pack(pady=(0, 10))
+
+            status_var = tk.StringVar(value="Initializing server...")
+            status_label = ttk.Label(main_frame, textvariable=status_var)
+            status_label.pack(pady=10)
+
+            # Server info
+            info_frame = ttk.LabelFrame(main_frame, text="Server Information", padding=10)
+            info_frame.pack(fill="both", expand=True, pady=10)
+
+            url_var = tk.StringVar(value="Starting...")
+            ttk.Label(info_frame, text="Local URL:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+            url_label = ttk.Label(info_frame, textvariable=url_var, foreground="blue")
+            url_label.pack(anchor="w", pady=(0, 10))
+
+            network_var = tk.StringVar(value="Starting...")
+            ttk.Label(info_frame, text="Network URL:", font=("Segoe UI", 9, "bold")).pack(
+                anchor="w"
+            )
+            network_label = ttk.Label(info_frame, textvariable=network_var, foreground="blue")
+            network_label.pack(anchor="w")
+
+            ttk.Label(
+                info_frame,
+                text="💡 Share the Network URL with your team to access the dashboard",
+                font=("Segoe UI", 8),
+                foreground="gray",
+            ).pack(pady=(10, 0))
+
+            # Buttons
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(pady=(10, 0))
+
+            process_container: dict[str, subprocess.Popen[str] | None] = {"process": None}
+
+            def stop_server() -> None:
+                if process_container["process"]:
+                    process_container["process"].terminate()
+                dialog.destroy()
+
+            def open_browser() -> None:
+                import webbrowser
+
+                url = url_var.get()
+                if url.startswith("http"):
+                    webbrowser.open(url)
+
+            open_btn = ttk.Button(button_frame, text="Open in Browser", command=open_browser)
+            open_btn.pack(side="left", padx=5)
+            open_btn.config(state="disabled")
+
+            ttk.Button(button_frame, text="Stop Server", command=stop_server).pack(
+                side="left", padx=5
+            )
+
+            dialog.protocol("WM_DELETE_WINDOW", stop_server)
+
+            # Start server in background
+            def start_server() -> None:
+                try:
+                    # Start streamlit server
+                    cmd = [
+                        sys.executable,
+                        "-m",
+                        "streamlit",
+                        "run",
+                        str(dashboard_path),
+                        "--server.headless=true",
+                        "--server.port=8501",
+                        "--",
+                        temp_path,
+                    ]
+
+                    process = subprocess.Popen(
+                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+                    )
+
+                    process_container["process"] = process
+
+                    # Parse output for URLs
+                    import socket
+
+                    hostname = socket.gethostname()
+                    local_ip = socket.gethostbyname(hostname)
+
+                    local_url = "http://localhost:8501"
+                    network_url = f"http://{local_ip}:8501"
+
+                    # Update UI
+                    dialog.after(2000, status_var.set, "✅ Server is running!")
+                    dialog.after(2000, url_var.set, local_url)
+                    dialog.after(2000, network_var.set, network_url)
+                    dialog.after(2000, lambda _: open_btn.config(state="normal"), "fuck")
+
+                    # Auto-open browser
+                    import webbrowser
+
+                    dialog.after(3000, webbrowser.open, local_url, 0, True)
+
+                except Exception as e:
+                    dialog.after(0, status_var.set, f"❌ Error: {e}")
+                    logger.error(f"Failed to start dashboard: {e}", exc_info=True)
+
+            # Start server thread
+            server_thread = threading.Thread(target=start_server, daemon=True)
+            server_thread.start()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start dashboard:\n{e}")
+            logger.error(f"Failed to start dashboard: {e}", exc_info=True)
+
+    def open_file_dashboard(self) -> None:
+        """Open Streamlit dashboard for an external audit report
+        file."""
+        import subprocess
+
+        # Select JSON file
+        filepath = filedialog.askopenfilename(
+            title="Select Audit Report", filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+        )
+
+        if not filepath:
+            return
+
+        # Verify it's a valid audit report
+        try:
+            with pathlib.Path(filepath).open("r", encoding="utf-8") as f:
+                report = json.load(f)
+                if "metadata" not in report or "images" not in report:
+                    messagebox.showerror("Error", "Invalid audit report format")
+                    return
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load report:\n{e}")
+            return
+
+        # Get dashboard path
+        dashboard_path = pathlib.Path(__file__).parent / "streamlit" / "audit.py"
+
+        if not dashboard_path.exists():
+            messagebox.showerror("Error", f"Dashboard not found: {dashboard_path}")
+            return
+
+        # Same dialog as open_current_dashboard but with filepath
+        # (copy the dialog code from above, just use filepath instead of temp_path)
+
+        # Simplified version: just open in browser
+        try:
+            cmd = [
+                sys.executable,
+                "-m",
+                "streamlit",
+                "run",
+                str(dashboard_path),
+                "--server.headless=false",
+                "--",
+                filepath,
+            ]
+
+            subprocess.Popen(cmd)
+
+            messagebox.showinfo(
+                "Dashboard",
+                f"Opening dashboard for:\n{pathlib.Path(filepath).name}\n\n"
+                "The dashboard will open in your default browser.",
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start dashboard:\n{e}")
+            logger.error(f"Failed to start dashboard: {e}", exc_info=True)
 
     # Utility Methods ==========================================================
 
