@@ -7,6 +7,7 @@ import typing as t
 
 from boxlab.annotator.workspace import Workspace
 from boxlab.dataset import Dataset
+from boxlab.dataset import io
 from boxlab.dataset.plugins.naming import OriginalNaming
 from boxlab.dataset.plugins.naming import PrefixNaming
 from boxlab.dataset.plugins.naming import SequentialNaming
@@ -15,6 +16,7 @@ from boxlab.dataset.types import Annotation
 from boxlab.dataset.types import ImageInfo
 
 if t.TYPE_CHECKING:
+    from boxlab.dataset import SplitRatio
     from boxlab.dataset.plugins import NamingStrategy
 
 logger = logging.getLogger(__name__)
@@ -527,7 +529,7 @@ class AnnotationController:
         output_dir: str,
         format_type: str,
         naming_strategy: str,
-        split_ratio: t.Any | None = None,
+        split_ratio: SplitRatio | None = None,
     ) -> None:
         """Export dataset to specified format.
 
@@ -561,25 +563,49 @@ class AnnotationController:
             split_name = next(iter(self.datasets.keys()))
             merged = self._remove_split_prefix(dataset, split_name)
 
-        # Apply split if requested
-        if split_ratio is not None:
-            logger.info(
-                f"Splitting dataset with ratios: train={split_ratio.train}, val={split_ratio.val}, test={split_ratio.test}"
-            )
-            merged = merged.split(split_ratio, seed=42)
-
         strategy = self._get_naming_strategy(naming_strategy)
         output_path = pathlib.Path(output_dir)
 
         if format_type == "coco":
             from boxlab.dataset.plugins.coco import COCOExporter
 
-            COCOExporter().export(merged, output_path, naming_strategy=strategy, copy_images=True)
+            if split_ratio is not None:
+                logger.info(
+                    f"Splitting dataset with ratios: train={split_ratio.train}, val={split_ratio.val}, test={split_ratio.test}"
+                )
+            COCOExporter().export(
+                merged,
+                output_path,
+                naming_strategy=strategy,
+                copy_images=True,
+                split_ratio=split_ratio,
+            )
         elif format_type == "yolo":
             from boxlab.dataset.plugins.yolo import YOLOExporter
 
-            YOLOExporter().export(merged, output_path, naming_strategy=strategy, copy_images=True)
-
+            if split_ratio is not None:
+                logger.info(
+                    f"Splitting dataset with ratios: "
+                    f"train={split_ratio.train}, "
+                    f"val={split_ratio.val}, "
+                    f"test={split_ratio.test}"
+                )
+            YOLOExporter().export(
+                merged,
+                output_path,
+                naming_strategy=strategy,
+                copy_images=True,
+                split_ratio=split_ratio,
+            )
+        else:
+            io.export_dataset(
+                merged,
+                output_path,
+                format=format_type,
+                naming_strategy=strategy,
+                copy_images=True,
+                split_ratio=split_ratio,
+            )
         logger.info(f"Export completed to {output_dir}")
 
     def _remove_split_prefix(self, dataset: Dataset, split_name: str) -> Dataset:
