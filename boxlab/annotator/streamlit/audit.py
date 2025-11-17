@@ -260,9 +260,9 @@ def show_images_table(report: AuditReport) -> None:
         filtered_df = filtered_df[filtered_df["audit_status"] == selected_status]
 
     if selected_changes == "With Changes":
-        filtered_df = filtered_df[filtered_df["has_changes"] is True]
+        filtered_df = filtered_df[filtered_df["has_changes"] == True]  # noqa: E712
     elif selected_changes == "No Changes":
-        filtered_df = filtered_df[filtered_df["has_changes"] is False]
+        filtered_df = filtered_df[filtered_df["has_changes"] == False]  # noqa: E712
 
     if selected_tags:
         filtered_df = filtered_df[
