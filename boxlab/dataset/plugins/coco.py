@@ -241,6 +241,8 @@ class COCOExporter(ExporterPlugin):
 
         logger.info(f"Exporting COCO dataset to {output_dir}")
 
+        image_counter = 0
+        ann_counter = 0
         if split_ratio is None:
             all_image_ids = list(dataset.images.keys())
             self._export_split(
@@ -256,7 +258,7 @@ class COCOExporter(ExporterPlugin):
             splits = dataset.split(split_ratio, seed)
             for split_name, image_ids in splits.items():
                 if image_ids:
-                    self._export_split(
+                    image_counter, ann_counter = self._export_split(
                         dataset,
                         output_dir,
                         split_name,
@@ -264,6 +266,8 @@ class COCOExporter(ExporterPlugin):
                         naming_strategy,
                         copy_images,
                         unified_structure,
+                        image_counter,
+                        ann_counter,
                     )
 
         logger.info(f"COCO dataset exported to: {output_dir}")
@@ -277,7 +281,9 @@ class COCOExporter(ExporterPlugin):
         naming_strategy: NamingStrategy,
         copy_images: bool,
         unified_structure: bool,
-    ) -> None:
+        image_counter: int = 0,
+        ann_counter: int = 0,
+    ) -> tuple[int, int]:
         """Export a single split."""
         # Setup directories
         if unified_structure:
@@ -312,10 +318,8 @@ class COCOExporter(ExporterPlugin):
                 "supercategory": "object",
             })
 
-        ann_id = 1
         used_names: set[str] = set()
 
-        # Export images and annotations
         for img_id in image_ids:
             img_info = dataset.get_image(img_id)
             if img_info is None:
@@ -330,8 +334,11 @@ class COCOExporter(ExporterPlugin):
             used_names.add(new_filename)
 
             # Add image entry
+            curr_iid = image_counter
+            image_counter += 1
+
             coco_output["images"].append({
-                "id": int(img_id.split("_")[-1]) if "_" in img_id else int(img_id),
+                "id": curr_iid,
                 "file_name": new_filename,
                 "width": img_info.width,
                 "height": img_info.height,
@@ -346,22 +353,26 @@ class COCOExporter(ExporterPlugin):
             # Add annotations
             for ann in dataset.get_annotations(img_id):
                 x, y, w, h = ann.bbox.xywh
+                curr_ann_id = ann_counter
+                ann_counter += 1
+
                 coco_output["annotations"].append({
-                    "id": int(ann.annotation_id) if ann.annotation_id else ann_id,
-                    "image_id": int(img_id.split("_")[-1]) if "_" in img_id else int(img_id),
+                    "id": curr_ann_id,
+                    "image_id": curr_iid,
                     "category_id": ann.category_id,
                     "bbox": [x, y, w, h],
                     "area": ann.get_area(),
                     "iscrowd": ann.iscrowd,
                     "segmentation": [],
                 })
-                ann_id += 1
 
         # Save annotation file
         with annotation_file.open(mode="w") as f:
             json.dump(coco_output, f, indent=2)
 
         logger.info(f"COCO {split_name} exported: {len(coco_output['images'])} images")
+
+        return image_counter, ann_counter
 
     def _resolve_filename_conflict(self, filename: str, used_names: set[str]) -> str:
         """Resolve filename conflicts."""

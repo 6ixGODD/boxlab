@@ -14,6 +14,7 @@ from boxlab.dataset.plugins.naming import SequentialNaming
 from boxlab.dataset.plugins.naming import UUIDNaming
 from boxlab.dataset.types import Annotation
 from boxlab.dataset.types import ImageInfo
+from boxlab.exceptions import DatasetNotFoundError
 
 if t.TYPE_CHECKING:
     from boxlab.dataset.plugins import NamingStrategy
@@ -344,43 +345,49 @@ class AnnotationController:
         if format_type == "coco":
             for split in splits:
                 ann_file = path_obj / f"annotations_{split}.json"
-                if ann_file.exists():
-                    from boxlab.dataset.plugins.coco import COCOLoader
+                if not ann_file.exists():
+                    raise DatasetNotFoundError(f"COCO annotation file not found: {ann_file}")
 
-                    dataset = COCOLoader().load(str(ann_file), name=f"dataset_{split}")
+                from boxlab.dataset.plugins.coco import COCOLoader
 
-                    # Ensure image_id uniqueness: add split prefix
-                    self._ensure_unique_image_ids(dataset, split)
+                dataset = COCOLoader().load(ann_file, name=f"{path_obj.stem}_{split}")
 
-                    self.datasets[split] = dataset
-                    self.image_ids_by_split[split] = list(dataset.images.keys())
+                # Ensure image_id uniqueness: add split prefix
+                self._ensure_unique_image_ids(dataset, split)
 
-                    # Store original annotations
-                    for img_id in dataset.images:
-                        self.original_annotations[img_id] = dataset.get_annotations(img_id).copy()
-                else:
-                    logger.warning(f"Annotation file not found: {ann_file}")
+                self.datasets[split] = dataset
+                self.image_ids_by_split[split] = list(dataset.images.keys())
+
+                # Store original annotations
+                for img_id in dataset.images:
+                    self.original_annotations[img_id] = dataset.get_annotations(img_id).copy()
 
         elif format_type == "yolo":
+            from boxlab.dataset.plugins.yolo import YOLOLoader
+
+            yaml_file = (
+                path_obj
+                if path_obj.is_file() and path_obj.suffix in {".yaml", ".yml"}
+                else path_obj / "data.yaml"
+            )
+            if not yaml_file.exists():
+                raise DatasetNotFoundError(f"YOLO data.yaml file not found at {yaml_file}")
+
             for split in splits:
-                split_dir = path_obj / "images" / split
-                if split_dir.exists():
-                    from boxlab.dataset.plugins.yolo import YOLOLoader
+                dataset = YOLOLoader().load(
+                    yaml_file, splits=split, name=f"{path_obj.stem}_{split}"
+                )
 
-                    dataset = YOLOLoader().load(path, splits=split, name=f"dataset_{split}")
+                # Ensure image_id uniqueness: add split prefix
+                self._ensure_unique_image_ids(dataset, split)
+                self.datasets[split] = dataset
+                self.image_ids_by_split[split] = list(dataset.images.keys())
 
-                    self._ensure_unique_image_ids(dataset, split)
+                # Store original annotations
+                for img_id in dataset.images:
+                    self.original_annotations[img_id] = dataset.get_annotations(img_id).copy()
 
-                    self.datasets[split] = dataset
-                    self.image_ids_by_split[split] = list(dataset.images.keys())
-
-                    # Store original annotations
-                    for img_id in dataset.images:
-                        self.original_annotations[img_id] = dataset.get_annotations(img_id).copy()
-                else:
-                    logger.warning(f"Split directory not found: {split_dir}")
-
-        if splits and self.datasets:
+        if splits and self.datasets:  # Set current split to first available
             self.current_split = (
                 splits[0] if splits[0] in self.datasets else next(iter(self.datasets.keys()))
             )

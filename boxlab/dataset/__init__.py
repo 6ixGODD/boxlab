@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL.Image as Image
 
+from boxlab.dataset import utils
 from boxlab.dataset.types import Annotation
 from boxlab.dataset.types import DatasetStatistics
 from boxlab.dataset.types import ImageInfo
@@ -679,6 +680,7 @@ class Dataset:
         other: Dataset,
         resolve_conflicts: t.Literal["skip", "rename", "error"] = "skip",
         preserve_sources: bool = True,
+        regen_ids: bool = True,
     ) -> Dataset:
         """Merge another dataset into a new dataset.
 
@@ -694,6 +696,9 @@ class Dataset:
                 - "error": Raise CategoryConflictError
             preserve_sources: If True, maintain source tracking information
                 from both datasets.
+            regen_ids: If True, regenerate image and annotation IDs to avoid
+                conflicts. Recommended when merging datasets with overlapping
+                IDs.
 
         Returns:
             A new Dataset object containing the merged data.
@@ -756,27 +761,53 @@ class Dataset:
 
         # Merge from self
         for img_id, img_info in self.images.items():
+            new_iid = utils.gen_uid(prefix="img_") if regen_ids else img_id
             source = self.source_info.get(img_id, self.name) if preserve_sources else None
-            merged.add_image(img_info, source_name=source)
+
+            # Create new ImageInfo with potentially new ID
+            new_img_info = ImageInfo(
+                image_id=new_iid,
+                file_name=img_info.file_name,
+                width=img_info.width,
+                height=img_info.height,
+                path=img_info.path,
+            )
+            merged.add_image(new_img_info, source_name=source)
             for ann in self.get_annotations(img_id):
-                merged.add_annotation(ann)
+                new_ann = (
+                    Annotation(
+                        bbox=ann.bbox,
+                        category_id=ann.category_id,
+                        category_name=ann.category_name,
+                        image_id=new_iid,
+                        annotation_id=utils.gen_uid(prefix="ann_")
+                        if regen_ids
+                        else ann.annotation_id,
+                        area=ann.area,
+                        iscrowd=ann.iscrowd,
+                    )
+                    if regen_ids
+                    else Annotation(
+                        bbox=ann.bbox,
+                        category_id=ann.category_id,
+                        category_name=ann.category_name,
+                        image_id=new_iid,
+                        annotation_id=ann.annotation_id,
+                        area=ann.area,
+                        iscrowd=ann.iscrowd,
+                    )
+                )
+                merged.add_annotation(new_ann)
 
         # Merge from other
-        image_id_offset = (
-            max(int(img_id) for img_id in merged.images if img_id.isdigit()) + 1
-            if merged.images
-            else 1
-        )
-
         for img_id, img_info in other.images.items():
-            if img_id in merged.images:
-                new_img_id = str(image_id_offset)
-                image_id_offset += 1
-            else:
-                new_img_id = img_id
-
+            new_iid = (
+                utils.gen_uid(prefix="img_")
+                if regen_ids
+                else self._resolve_id_conflict(img_id, lambda x: x in merged.images)
+            )
             new_img_info = ImageInfo(
-                image_id=new_img_id,
+                image_id=new_iid,
                 file_name=img_info.file_name,
                 width=img_info.width,
                 height=img_info.height,
@@ -795,8 +826,8 @@ class Dataset:
                     bbox=ann.bbox,
                     category_id=category_mapping[ann.category_id],
                     category_name=new_cat_name,
-                    image_id=new_img_id,
-                    annotation_id=ann.annotation_id,
+                    image_id=new_iid,
+                    annotation_id=utils.gen_uid(prefix="ann_") if regen_ids else ann.annotation_id,
                     area=ann.area,
                     iscrowd=ann.iscrowd,
                 )
@@ -804,6 +835,30 @@ class Dataset:
 
         logger.info(f"Merge completed: {merged.num_images()} images")
         return merged
+
+    def _resolve_id_conflict(self, curr_id: str, is_conflict: t.Callable[[str], bool]) -> str:
+        """Generate a new ID to resolve conflicts.
+
+        Args:
+            curr_id: The current ID that may conflict.
+            is_conflict: A callable that checks if an ID conflicts.
+
+        Returns:
+            A new ID that does not conflict.
+        """
+        if curr_id.isdigit():  # Numeric ID
+            new_id = int(curr_id)
+            while is_conflict(str(new_id)):
+                new_id += 1  # Increment to find next available ID
+            return str(new_id)
+
+        # Alphanumeric ID
+        counter = 1
+        new_id = curr_id
+        while is_conflict(new_id):
+            counter += 1
+            new_id = f"{curr_id}_other_{counter}"
+        return new_id
 
     def split(self, split_ratio: SplitRatio, seed: int | None = None) -> dict[str, list[str]]:
         """Split dataset into train, validation, and test sets.

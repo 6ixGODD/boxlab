@@ -76,7 +76,6 @@ class YOLOLoader(LoaderPlugin):
         path: str | os.PathLike[str],
         name: str | None = None,
         splits: str | list[str] | None = None,
-        yaml_file: str = "data.yaml",
         **_kwargs: t.Any,
     ) -> Dataset:
         """Load YOLO format dataset.
@@ -86,14 +85,13 @@ class YOLOLoader(LoaderPlugin):
         labels.
 
         Args:
-            path: Path to YOLO dataset root directory.
+            path: Path to YOLO dataset YAML configuration file.
             name: Optional custom name for the dataset. If None, uses directory
                 name.
             splits: Which split(s) to load. Can be:
                 - None: Load all splits (train, val, test)
                 - str: Load single split (e.g., "train")
                 - list[str]: Load specific splits (e.g., ["train", "val"])
-            yaml_file: Name of YAML configuration file. Defaults to "data.yaml".
             **_kwargs: Additional parameters (currently unused, reserved for
                 future extensions).
 
@@ -105,8 +103,7 @@ class YOLOLoader(LoaderPlugin):
             FileNotFoundError: If the YAML configuration file is not found.
             ValueError: If YAML configuration is missing required 'names' field.
         """
-        yolo_dir = pathlib.Path(path)
-        yaml_path = yolo_dir / yaml_file
+        yaml_path = pathlib.Path(path)
 
         if not yaml_path.exists():
             raise FileNotFoundError(f"YAML file not found: {yaml_path}")
@@ -115,10 +112,13 @@ class YOLOLoader(LoaderPlugin):
         with yaml_path.open(mode="r") as f:
             yaml_config = yaml.safe_load(f)
 
-        dataset_name = name or yolo_dir.name
+        dataset_name = name or yaml_path.name
         dataset = Dataset(name=dataset_name)
+        dataset_dir = (
+            pathlib.Path(yaml_config["path"]) if "path" in yaml_config else yaml_path.parent
+        )
 
-        logger.info(f"Loading YOLOv5 dataset from {yolo_dir}")
+        logger.info(f"Loading YOLOv5 dataset from {dataset_dir}")
 
         # Load categories
         self._load_categories(yaml_config, dataset)
@@ -133,15 +133,19 @@ class YOLOLoader(LoaderPlugin):
         total_annotations = 0
 
         for split in splits_to_load:
-            images_dir = yolo_dir / "images" / split
-            labels_dir = yolo_dir / "labels" / split
+            images_dir = dataset_dir / "images" / split
+            labels_dir = dataset_dir / "labels" / split
 
             if not images_dir.exists():
                 logger.warning(f"Images directory not found for {split}: {images_dir}")
                 continue
 
             split_images, split_annotations = self._load_split(
-                dataset, images_dir, labels_dir, total_images, total_annotations
+                dataset,
+                images_dir,
+                labels_dir,
+                total_images,
+                total_annotations,
             )
 
             total_images += split_images
