@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit report analysis tools
 - Additional format plugins (Pascal VOC, TFRecord)
 - Documentation tutorials (especially for GUI annotator)
+
+## [0.1.3] - 2025-01-17
+
+### Fixed
+- Fixed split error when exporting datasets in GUI annotator
+- Fixed import errors
+
+### Added
+- Added streamlit-based audit report analysis tool (experimental), accessible via annotator menu
+
 ## [0.1.2] - 2025-01-17
 
 ### Fixed
@@ -200,7 +210,8 @@ Security vulnerability fixes.
 
 **Note**: Dates are in ISO 8601 format (YYYY-MM-DD). All notable changes for each version are documented above.
 
-[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/6ixGODD/boxlab/compare/v0.1.3
 [0.1.2]: https://github.com/6ixGODD/boxlab/compare/v0.1.2
 [0.1.1]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.1
 [0.1.0]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.0
