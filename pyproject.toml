@@ -4,7 +4,7 @@ requires = [ "poetry-core>=2,<3" ]
 
 [project]
 name = "boxlab"
-version = "0.1.3"
+version = "0.1.4"
 description = "A comprehensive Python toolkit for managing, converting, and annotating object detection datasets with support for COCO and YOLO formats."
 readme = "README.md"
 authors = [

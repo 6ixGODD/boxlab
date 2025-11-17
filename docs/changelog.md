@@ -9,9 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 - Data augmentation support in GUI annotator
-- Audit report analysis tools
 - Additional format plugins (Pascal VOC, TFRecord)
 - Documentation tutorials (especially for GUI annotator)
+
+## [0.1.4] - 2025-01-17
+
+### Fixed
+- Fixed id conflicts when merging datasets with overlapping image IDs
+- Fixed minor bugs
+
+### Changed
+- Enhanced test CI workflow with coverage reporting
+
+### Added
+- Added unit tests for all core functionalities
+
 
 ## [0.1.3] - 2025-01-17
 
@@ -210,7 +222,8 @@ Security vulnerability fixes.
 
 **Note**: Dates are in ISO 8601 format (YYYY-MM-DD). All notable changes for each version are documented above.
 
-[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/6ixGODD/boxlab/compare/v0.1.4
 [0.1.3]: https://github.com/6ixGODD/boxlab/compare/v0.1.3
 [0.1.2]: https://github.com/6ixGODD/boxlab/compare/v0.1.2
 [0.1.1]: https://github.com/6ixGODD/boxlab/releases/tag/v0.1.1
