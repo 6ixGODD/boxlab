@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import io
 import json
-import os
 import pathlib
 import sys
 import typing as t
@@ -12,15 +12,15 @@ import plotly.graph_objects as go
 import streamlit as st
 
 if t.TYPE_CHECKING:
-    from streamlit.runtime.uploaded_file_manager import UploadedFile
-
     from boxlab.annotator.types import AuditReport
 
 
-def load_report(filepath: str | os.PathLike[str]) -> AuditReport:
-    """Load audit report from JSON file."""
-    with pathlib.Path(filepath).open("r", encoding="utf-8") as f:
-        return json.load(f)  # type: ignore
+def load_report(file: t.IO) -> AuditReport | None:
+    # Load report
+    try:
+        return json.load(file)
+    except Exception as e:
+        st.error(f"❌ Failed to load report: {e}")
 
 
 def render_metric_card(title: str, value: str | int, delta: str = "", icon: str = "📊") -> None:
@@ -139,7 +139,7 @@ def show_charts(report: AuditReport) -> None:
             margin={"t": 0, "b": 0, "l": 0, "r": 0},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width=True)
 
     with col2:
         st.markdown("### Status Comparison")
@@ -171,7 +171,7 @@ def show_charts(report: AuditReport) -> None:
             margin={"t": 30, "b": 0, "l": 0, "r": 0},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width=True)
 
     # Tags distribution
     images = report["images"]
@@ -217,7 +217,7 @@ def show_charts(report: AuditReport) -> None:
             margin={"t": 30, "b": 0, "l": 0, "r": 0},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width=True)
 
 
 def show_images_table(report: AuditReport) -> None:
@@ -289,7 +289,7 @@ def show_images_table(report: AuditReport) -> None:
             data=csv,
             file_name="filtered_audit_report.csv",
             mime="text/csv",
-            use_container_width=True,
+            width=True,
         )
 
     # Column selector
@@ -324,7 +324,7 @@ def show_images_table(report: AuditReport) -> None:
         # Display table
         st.dataframe(
             display_df,
-            use_container_width=True,
+            width=True,
             height=500,
             column_config={
                 "filename": st.column_config.TextColumn("Filename", width="large"),
@@ -454,7 +454,7 @@ def show_statistics(report: AuditReport) -> None:
             xaxis={"showgrid": False},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width=True)
 
     with col2:
         source_by_status = df.groupby(["source", "audit_status"]).size().reset_index(name="count")
@@ -476,7 +476,7 @@ def show_statistics(report: AuditReport) -> None:
             xaxis={"showgrid": False},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width=True)
 
     # Annotation statistics
     st.markdown("### 📦 Annotation Statistics")
@@ -516,17 +516,21 @@ def main() -> None:
     )
 
     # File uploader or command line arg
-    report_path: str | UploadedFile | None = None
+    report_file: io.IOBase | None = None
+    report: AuditReport | None = None
 
     if len(sys.argv) > 1:
         report_path = sys.argv[1]
+        with pathlib.Path(report_path).open("rb", encoding="utf-8") as f:
+            report = load_report(f)
+
     else:
         st.sidebar.markdown("## 📂 Load Report")
         uploaded_file = st.file_uploader("Upload audit report JSON", type=["json"])
         if uploaded_file:
-            report_path = uploaded_file
+            report = load_report(uploaded_file)
 
-    if report_path is None:
+    if report_file is None:
         st.markdown(
             """
         <div class="dashboard-header">
@@ -555,12 +559,7 @@ def main() -> None:
 
         return
 
-    # Load report
-    try:
-        report = load_report(report_path)
-        st.sidebar.success(f"✅ Loaded: {pathlib.Path(report_path).name}")
-    except Exception as e:
-        st.error(f"❌ Failed to load report: {e}")
+    if report is None:
         return
 
     # Sidebar navigation
