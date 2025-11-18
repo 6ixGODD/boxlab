@@ -847,10 +847,10 @@ class Dataset:
             A new ID that does not conflict.
         """
         if curr_id.isdigit():  # Numeric ID
-            new_id = int(curr_id)
-            while is_conflict(str(new_id)):
-                new_id += 1  # Increment to find next available ID
-            return str(new_id)
+            new_id_int = int(curr_id)
+            while is_conflict(str(new_id_int)):
+                new_id_int += 1  # Increment to find next available ID
+            return str(new_id_int)
 
         # Alphanumeric ID
         counter = 1

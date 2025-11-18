@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional format plugins (Pascal VOC, TFRecord)
 - Documentation tutorials (especially for GUI annotator)
 
+## [0.1.5] - 2025-01-18
+
+### Fixed
+- Fixed dataset loading issues in YOLO plugin
+- Fixed test workflow issues
+
+### Added
+- Added image deletion feature in GUI annotator
+
+
 ## [0.1.4] - 2025-01-17
 
 ### Fixed
@@ -222,7 +232,8 @@ Security vulnerability fixes.
 
 **Note**: Dates are in ISO 8601 format (YYYY-MM-DD). All notable changes for each version are documented above.
 
-[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/6ixGODD/boxlab/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/6ixGODD/boxlab/compare/v0.1.5
 [0.1.4]: https://github.com/6ixGODD/boxlab/compare/v0.1.4
 [0.1.3]: https://github.com/6ixGODD/boxlab/compare/v0.1.3
 [0.1.2]: https://github.com/6ixGODD/boxlab/compare/v0.1.2
