@@ -287,6 +287,7 @@ class AnnotatorApp:
             on_approve=self.approve_current,
             on_reject=self.reject_current,
             on_audit_comment_changed=self.on_audit_comment_changed,
+            on_delete_image=self.delete_current_image,
         )
         self.control_panel.grid(row=1, column=0, sticky="ew")
 
@@ -328,9 +329,70 @@ class AnnotatorApp:
         self.root.bind("<Delete>", lambda _: self.delete_selected())
         self.root.bind("<Control-z>", lambda _: self.undo())
 
+        # Delete current image (Shift+Delete)
+        self.root.bind("<Shift-Delete>", lambda _: self.delete_current_image())
+
         # Audit shortcuts
         self.root.bind("<F1>", lambda _: self.approve_current())
         self.root.bind("<F2>", lambda _: self.reject_current())
+
+    def delete_current_image(self) -> None:
+        """Delete current image with confirmation."""
+        current_id = self.controller.get_current_image_id()
+        if not current_id:
+            messagebox.showwarning("Warning", "No image selected")
+            return
+
+        # Get image info for confirmation
+        img_info = self.controller.get_image_info(current_id)
+        filename = img_info.file_name if img_info else current_id
+
+        # Confirmation dialog
+        response = messagebox.askyesno(
+            "Delete Image",
+            f"Are you sure you want to delete this image?\n\n"
+            f"Filename: {filename}\n"
+            f"ID: {current_id}\n\n"
+            "This will remove the image from the dataset.\n"
+            "This action cannot be undone.",
+            icon="warning",
+        )
+
+        if not response:
+            return
+
+        # Delete the image
+        if self.controller.delete_current_image():
+            # Get next image to display
+            next_id = self.controller.get_next_image_after_delete()
+
+            if next_id:
+                # Load next image
+                self.load_image(next_id)
+                self.image_list_panel.select_image(next_id)
+                self.update_counter()
+                self.status_var.set(f"✓ Image deleted: {filename}")
+            else:
+                # No more images in this split
+                self.canvas.clear()
+                self.info_panel.clear()
+                self.update_counter()
+                self.status_var.set(f"✓ Image deleted: {filename} (no more images)")
+                messagebox.showinfo(
+                    "Split Empty", f"No more images in the '{self.controller.current_split}' split."
+                )
+
+            # Update image list panel
+            if self.controller.current_split:
+                images = self.controller.get_images_in_split(self.controller.current_split)
+                self.image_list_panel.set_images(images)
+
+            # Mark workspace as modified
+            self._update_window_title()
+
+        else:
+            messagebox.showerror("Error", "Failed to delete image")
+            self.status_var.set("❌ Failed to delete image")
 
     # File Operations ==========================================================
 
@@ -1198,6 +1260,7 @@ View:
 
 Editing:
   Delete\t\t\tDelete selected annotation
+  Shift + Delete\t\tDelete current image
   Ctrl + Z\t\t\tUndo last change
   Right Click\t\tShow delete menu
   Drag Corners\t\tResize (diagonal)

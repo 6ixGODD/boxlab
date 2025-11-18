@@ -817,3 +817,84 @@ class AnnotationController:
             "categories": num_categories,
             "splits": len(self.datasets),
         }
+
+    def delete_current_image(self) -> bool:
+        """Delete current image from dataset.
+
+        Returns:
+            True if deletion successful, False otherwise.
+        """
+        current_id = self.get_current_image_id()
+        if not current_id or not self.current_split:
+            return False
+
+        logger.info(f"Deleting image: {current_id}")
+
+        # Get current dataset
+        dataset = self.datasets.get(self.current_split)
+        if not dataset:
+            return False
+
+        # Remove from dataset
+        if current_id in dataset.images:
+            del dataset.images[current_id]
+
+        if current_id in dataset.annotations:
+            del dataset.annotations[current_id]
+
+        if current_id in dataset.source_info:
+            del dataset.source_info[current_id]
+
+        # Remove from image_ids_by_split
+        if current_id in self.image_ids_by_split[self.current_split]:
+            self.image_ids_by_split[self.current_split].remove(current_id)
+
+        # Remove from original_annotations
+        if current_id in self.original_annotations:
+            del self.original_annotations[current_id]
+
+        # Remove from modified_annotations
+        if current_id in self.modified_annotations:
+            del self.modified_annotations[current_id]
+
+        # Remove audit info
+        if current_id in self.audit_status:
+            del self.audit_status[current_id]
+
+        if current_id in self.audit_comments:
+            del self.audit_comments[current_id]
+
+        # Remove tags
+        if current_id in self.image_tags:
+            del self.image_tags[current_id]
+
+        # Adjust current_index if needed
+        split_size = len(self.image_ids_by_split[self.current_split])
+        if self.current_index >= split_size > 0:
+            self.current_index = split_size - 1
+        elif split_size == 0:
+            self.current_index = 0
+
+        self.set_workspace_modified()
+        logger.info(f"Image {current_id} deleted successfully")
+
+        return True
+
+    def get_next_image_after_delete(self) -> str | None:
+        """Get next image ID after current image is deleted.
+
+        Returns:
+            Next image ID, or None if no more images.
+        """
+        if not self.current_split:
+            return None
+
+        images = self.image_ids_by_split.get(self.current_split, [])
+        if not images:
+            return None
+
+        # Return image at current index (which is now the "next" image after deletion)
+        if 0 <= self.current_index < len(images):
+            return images[self.current_index]
+
+        return None

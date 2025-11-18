@@ -733,3 +733,19 @@ class AnnotationCanvas(tk.Canvas):
         self.pan_offset_x = 0
         self.pan_offset_y = 0
         self.render()
+
+    def clear(self) -> None:
+        """Clear canvas and reset state."""
+        self.image = None
+        self.photo_image = None
+        self.annotations.clear()
+        self.categories.clear()
+        self.current_category = None
+        self.zoom_level = 1.0
+        self.selected_annotation = None
+        self.drawing = False
+        self.pan_offset_x = 0
+        self.pan_offset_y = 0
+        self.image_cache.clear()
+        self.undo_stack.clear()
+        self.delete("all")

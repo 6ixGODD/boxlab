@@ -249,6 +249,7 @@ class ControlPanel(ttk.Frame):
         on_approve: t.Callable[[], None],
         on_reject: t.Callable[[], None],
         on_audit_comment_changed: t.Callable[[str], None],
+        on_delete_image: t.Callable[[], None],
     ):
         """Initialize control panel."""
         super().__init__(parent)
@@ -260,6 +261,7 @@ class ControlPanel(ttk.Frame):
         self.on_approve = on_approve
         self.on_reject = on_reject
         self.on_audit_comment_changed = on_audit_comment_changed
+        self.on_delete_image = on_delete_image
 
         # Navigation & Editing Frame
         self.nav_frame = ttk.Frame(self, padding=5)
@@ -319,7 +321,7 @@ class ControlPanel(ttk.Frame):
             command=self.on_audit_mode_toggle,
             style="Toolbutton",
         )
-        audit_toggle_btn.pack(side="left")
+        audit_toggle_btn.pack(side="left", padx=(0, 10))
 
         # Audit Controls Frame (conditionally displayed below nav frame)
         self.audit_frame = ttk.Frame(self, padding=(5, 0, 5, 5))
@@ -366,6 +368,14 @@ class ControlPanel(ttk.Frame):
         self.audit_comment_text.bind("<KeyRelease>", self.on_comment_changed)
 
         self.categories: dict[int, str] = {}
+
+        # Delete button
+        ttk.Button(
+            right_frame,
+            text="🗑 Delete",
+            command=self.on_delete_image,
+            width=10,
+        ).pack(side="left", padx=(0, 10))
 
     def set_splits(self, splits: list[str], current: str) -> None:
         """Set available splits."""
@@ -551,11 +561,11 @@ class InfoPanel(ttk.Frame):
         # Listbox with scrollbar
         self.tags_listbox = tk.Listbox(
             tags_list_container,
-            height=5,  # 增加高度
-            font=("Segoe UI", 9),  # 改用更常见的字体
-            bg="white",  # 明确设置背景色
-            fg="black",  # 明确设置前景色
-            selectbackground="#0078D7",  # Windows 蓝色
+            height=5,
+            font=("Segoe UI", 9),
+            bg="white",
+            fg="black",
+            selectbackground="#0078D7",
             selectforeground="white",
         )
 
@@ -692,4 +702,24 @@ class InfoPanel(ttk.Frame):
                 f"{ann.bbox.x_max:.0f}, {ann.bbox.y_max:.0f}\n\n",
             )
 
+        self.annotations_text.config(state="disabled")
+
+    def clear(self) -> None:
+        """Clear info panel."""
+        # Clear dataset info
+        self.dataset_text.config(state="normal")
+        self.dataset_text.delete("1.0", tk.END)
+        self.dataset_text.config(state="disabled")
+
+        # Clear image info
+        self.image_text.config(state="normal")
+        self.image_text.delete("1.0", tk.END)
+        self.image_text.config(state="disabled")
+
+        # Clear tags
+        self.tags_listbox.delete(0, tk.END)
+
+        # Clear annotations
+        self.annotations_text.config(state="normal")
+        self.annotations_text.delete("1.0", tk.END)
         self.annotations_text.config(state="disabled")
